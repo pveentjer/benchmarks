@@ -17,7 +17,7 @@ protoc = "3.25.5"
 protobufPlugin = "0.9.4"
 scala = "2.13.14"
 shadow = "8.3.6"
-slf4j = "2.0.16"
+slf4j = "2.0.17"
 tomcat = "6.0.53"
 versions = "0.52.0"
 
