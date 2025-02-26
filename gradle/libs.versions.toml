@@ -8,7 +8,6 @@ gradle = "8.12.1"
 grpc = "1.70.0"
 hamcrest = "3.0"
 hdrHistogram = "2.2.2"
-jackson = "2.16.2"
 jmh = "1.37"
 junit = "5.12.0"
 kafka = "3.8.1"
@@ -45,7 +44,6 @@ slf4j-api = { group= "org.slf4j" , name="slf4j-api", version.ref = "slf4j" }
 slf4j-log4j12 = { group= "org.slf4j" , name="slf4j-log4j12", version.ref = "slf4j" }
 scala-library = { group= "org.scala-lang" , name="scala-library", version.ref = "scala" }
 scala-reflect = { group= "org.scala-lang" , name="scala-reflect", version.ref = "scala" }
-jackson-databind = { group= "com.fasterxml.jackson.core" , name="jackson-databind", version.ref = "jackson" }
 
 [plugins]
 protobuf = { id = "com.google.protobuf", version.ref = "protobufPlugin" }
