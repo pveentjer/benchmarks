@@ -1,7 +1,7 @@
 [versions]
 agrona = "2.1.0"
 aeron = "1.47.3"
-checkstyle = "10.21.3"
+checkstyle = "10.21.4"
 disruptor = "3.4.0"
 errorprone = "2.30.0"
 gradle = "8.13"
