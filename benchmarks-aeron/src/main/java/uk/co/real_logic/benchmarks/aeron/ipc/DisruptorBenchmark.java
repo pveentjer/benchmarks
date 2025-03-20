@@ -17,7 +17,6 @@ package uk.co.real_logic.benchmarks.aeron.ipc;
 
 import com.lmax.disruptor.BusySpinWaitStrategy;
 import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.LifecycleAware;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
@@ -111,7 +110,7 @@ public class DisruptorBenchmark
         }
     }
 
-    public static class Handler implements EventHandler<Message>, LifecycleAware
+    public static class Handler implements EventHandler<Message>
     {
         private final Queue<Integer>[] responseQueues;
         private final CountDownLatch startLatch = new CountDownLatch(1);

@@ -2,7 +2,7 @@
 agrona = "2.1.0"
 aeron = "1.47.4"
 checkstyle = "10.21.4"
-disruptor = "3.4.0"
+disruptor = "4.0.0"
 errorprone = "2.30.0"
 gradle = "8.13"
 grpc = "1.71.0"
