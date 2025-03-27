@@ -160,13 +160,15 @@ public final class ReplayNode implements AutoCloseable, Runnable
         mergeWithSystemProperties(PRESERVE, loadPropertiesFiles(new Properties(), REPLACE, args));
         final Path outputDir = Configuration.resolveLogsDir();
         final int receiverIndex = receiverIndex();
-        Thread.currentThread().setName("replay-" + receiverIndex);
 
         final AtomicBoolean running = new AtomicBoolean(true);
         installSignalHandler(() -> running.set(false));
 
         try (ReplayNode server = new ReplayNode(running))
         {
+            // wait for all background threads to be started before pinning the main thread to a dedicated core
+            Thread.currentThread().setName("replay-" + receiverIndex);
+
             server.run();
 
             final String prefix = "replay-node-" + receiverIndex + "-";

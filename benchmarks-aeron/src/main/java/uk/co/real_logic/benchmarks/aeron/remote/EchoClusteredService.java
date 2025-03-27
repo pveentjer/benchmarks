@@ -35,7 +35,7 @@ public final class EchoClusteredService implements ClusteredService
 {
     private final BufferClaim bufferClaim = new BufferClaim();
     private IdleStrategy idleStrategy;
-    private long snapshotSize;
+    private final long snapshotSize;
 
     public EchoClusteredService(final long snapshotSize)
     {

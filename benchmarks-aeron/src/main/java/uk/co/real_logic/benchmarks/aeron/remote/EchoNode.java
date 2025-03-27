@@ -139,18 +139,19 @@ public final class EchoNode implements AutoCloseable, Runnable
         mergeWithSystemProperties(PRESERVE, loadPropertiesFiles(new Properties(), REPLACE, args));
         final Path outputDir = Configuration.resolveLogsDir();
         final int receiverIndex = AeronUtil.receiverIndex();
-        Thread.currentThread().setName("echo-" + receiverIndex);
 
         final AtomicBoolean running = new AtomicBoolean(true);
         installSignalHandler(() -> running.set(false));
 
-        try (EchoNode server = new EchoNode(running))
+        try (EchoNode node = new EchoNode(running))
         {
-            server.run();
+            Thread.currentThread().setName("echo-" + receiverIndex);
+
+            node.run();
 
             final String prefix = "echo-node-" + receiverIndex + "-";
             AeronUtil.dumpAeronStats(
-                server.aeron.context().cncFile(),
+                node.aeron.context().cncFile(),
                 outputDir.resolve(prefix + "aeron-stat.txt"),
                 outputDir.resolve(prefix + "errors.txt"));
         }

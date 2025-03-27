@@ -328,12 +328,13 @@ public final class LoadTestRig
 
     public static void main(final String[] args) throws Exception
     {
-        Thread.currentThread().setName("load-test-rig");
         mergeWithSystemProperties(PRESERVE, loadPropertiesFiles(new Properties(), REPLACE, args));
 
-        final Configuration configuration = Configuration.fromSystemProperties();
+        final LoadTestRig loadTestRig = new LoadTestRig(Configuration.fromSystemProperties());
 
-        new LoadTestRig(configuration).run();
+        // wait for all background threads to be started before pinning the main thread to a dedicated core
+        Thread.currentThread().setName("load-test-rig");
+        loadTestRig.run();
     }
 
     static final class SendResult

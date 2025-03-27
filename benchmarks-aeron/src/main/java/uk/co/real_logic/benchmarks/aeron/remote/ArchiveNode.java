@@ -104,13 +104,15 @@ public final class ArchiveNode implements AutoCloseable, Runnable
     {
         mergeWithSystemProperties(PRESERVE, loadPropertiesFiles(new Properties(), REPLACE, args));
         final Path outputDir = Configuration.resolveLogsDir();
-        Thread.currentThread().setName("archive-node");
 
         final AtomicBoolean running = new AtomicBoolean(true);
         installSignalHandler(() -> running.set(false));
 
         try (ArchiveNode server = new ArchiveNode(running))
         {
+            // wait for all background threads to be started before pinning the main thread to a dedicated core
+            Thread.currentThread().setName("archive-node");
+
             server.run();
 
             final String prefix = "archive-node-";

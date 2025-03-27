@@ -357,12 +357,15 @@ public final class FailoverTestRig implements FailoverListener
 
     public static void main(final String[] args) throws Exception
     {
-        Thread.currentThread().setName("load-test-rig");
         mergeWithSystemProperties(PRESERVE, loadPropertiesFiles(new Properties(), REPLACE, args));
 
         final Configuration configuration = Configuration.fromSystemProperties();
         final FailoverConfiguration failoverConfiguration = FailoverConfiguration.fromSystemProperties();
 
-        new FailoverTestRig(configuration, failoverConfiguration).run();
+        final FailoverTestRig failoverTestRig = new FailoverTestRig(configuration, failoverConfiguration);
+
+        // wait for all background threads to be started before pinning the main thread to a dedicated core
+        Thread.currentThread().setName("load-test-rig");
+        failoverTestRig.run();
     }
 }
