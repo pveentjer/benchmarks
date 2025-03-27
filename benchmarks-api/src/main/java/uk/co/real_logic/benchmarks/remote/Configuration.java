@@ -94,7 +94,7 @@ public final class Configuration
     /**
      * Default progress reporting.
      */
-    public static final boolean DEFAULT_REPORT_PROGESS = true;
+    public static final boolean DEFAULT_REPORT_PROGESS = false;
 
     /**
      * Minimal length in bytes of a single message. Contains enough space to hold a {@code timestamp} and a

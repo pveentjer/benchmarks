@@ -111,6 +111,8 @@ function run_benchmarks()
 
         jvm_opts="export JVM_OPTS=\""
         jvm_opts+="${client_jvm_opts} "
+        jvm_opts+="-Duk.co.real_logic.benchmarks.remote.track.history=${TRACK_HISTORY:-false} "
+        jvm_opts+="-Duk.co.real_logic.benchmarks.remote.report.progress=${REPORT_PROGRESS:-false} "
         jvm_opts+="-Duk.co.real_logic.benchmarks.aeron.remote.connection.timeout=${connectionTimeout} "
         jvm_opts+="-Duk.co.real_logic.benchmarks.remote.warmup.iterations=${warmupIterations} "
         jvm_opts+="-Duk.co.real_logic.benchmarks.remote.warmup.message.rate=${warmupMessageRate} "

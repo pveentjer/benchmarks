@@ -339,6 +339,8 @@ do
           -Duk.co.real_logic.benchmarks.remote.batch.size=${burstSize# }\
           -Duk.co.real_logic.benchmarks.remote.message.length=${messageLength# }\
           -Duk.co.real_logic.benchmarks.remote.output.file=${test}\
+          -Duk.co.real_logic.benchmarks.remote.track.history=${TRACK_HISTORY:-false}\
+          -Duk.co.real_logic.benchmarks.remote.report.progress=${REPORT_PROGRESS:-false}\
           -Duk.co.real_logic.benchmarks.remote.output.directory=${BENCHMARKS_PATH}/${output_dir}\
           -Duk.co.real_logic.benchmarks.aeron.remote.destination.channel=${DESTINATION_CHANNEL}\
           -Duk.co.real_logic.benchmarks.aeron.remote.source.channel=${SOURCE_CHANNEL}\"\

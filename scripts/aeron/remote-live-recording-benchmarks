@@ -298,6 +298,8 @@ do
         "${SERVER_BENCHMARKS_PATH}/${output_dir}/${client_md}-vs-${server_md}_fsync=${fsync}_mtu=${mtu}" \
         "-Daeron.mtu.length=${mtu} \
         -Duk.co.real_logic.benchmarks.remote.output.file=${test} \
+        -Duk.co.real_logic.benchmarks.remote.track.history=${TRACK_HISTORY:-false}\
+        -Duk.co.real_logic.benchmarks.remote.report.progress=${REPORT_PROGRESS:-false}\
         -Duk.co.real_logic.benchmarks.aeron.remote.destination.channel=aeron:udp?endpoint=${DESTINATION_IP}:13000${client_interface} \
         -Duk.co.real_logic.benchmarks.aeron.remote.source.channel=aeron:udp?endpoint=${SOURCE_IP}:13100${client_interface} \
         -Daeron.archive.dir=${ARCHIVE_DIR} \
