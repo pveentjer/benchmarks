@@ -255,18 +255,18 @@ function start_replay_node()
 scripts_path="benchmarks_path_var/scripts/aeron"
 
 driver_properties="echo -e \"\
-aeron.conductor.cpu.affinity=driver_conductor_cpu_core_var\n \
-aeron.sender.cpu.affinity=driver_sender_cpu_core_var\n \
-aeron.receiver.cpu.affinity=driver_receiver_cpu_core_var\n \
-aeron.driver.async.executor.cpu.affinity=driver_async_executor_cpu_core_var\n \
-aeron.mtu.length=driver_mtu_var\n \
-aeron.ipc.mtu.length=driver_mtu_var\n \
-aeron.socket.so_sndbuf=${so_sndbuf}\n \
-aeron.socket.so_rcvbuf=${so_rcvbuf}\n \
-aeron.rcv.initial.window.length=${rcv_initial_window}\n \
-aeron.network.publication.max.messages.per.send=${max_messages_per_send}\n \
-aeron.receiver.io.vector.capacity=${max_messages_per_send}\n \
-aeron.sender.io.vector.capacity=${max_messages_per_send}\n \
+aeron.conductor.cpu.affinity=driver_conductor_cpu_core_var\n\
+aeron.sender.cpu.affinity=driver_sender_cpu_core_var\n\
+aeron.receiver.cpu.affinity=driver_receiver_cpu_core_var\n\
+aeron.driver.async.executor.cpu.affinity=driver_async_executor_cpu_core_var\n\
+aeron.mtu.length=driver_mtu_var\n\
+aeron.ipc.mtu.length=driver_mtu_var\n\
+aeron.socket.so_sndbuf=${so_sndbuf}\n\
+aeron.socket.so_rcvbuf=${so_rcvbuf}\n\
+aeron.rcv.initial.window.length=${rcv_initial_window}\n\
+aeron.network.publication.max.messages.per.send=${max_messages_per_send}\n\
+aeron.receiver.io.vector.capacity=${max_messages_per_send}\n\
+aeron.sender.io.vector.capacity=${max_messages_per_send}\n\
 \" > ${scripts_path}/benchmark.properties"
 
 drivers['java']="${driver_properties}; \
