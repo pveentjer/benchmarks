@@ -469,7 +469,7 @@ class ConfigurationTest
             "\n    messageTransceiverClass=uk.co.real_logic.benchmarks.remote.InMemoryMessageTransceiver" +
             "\n    idleStrategy=NoOpIdleStrategy{alias=noop}" +
             "\n    trackHistory=false" +
-            "\n    reportProgress=true" +
+            "\n    reportProgress=false" +
             "\n    outputDirectory=" + Paths.get("results").toAbsolutePath() +
             "\n    outputFileNamePrefix=my-file_rate=777K_batch=2_length=64" +
             "_sha=73ccec448ba12264acb12e7f9f36fddc73e8c62e43549b786a901c88891610c9" +
