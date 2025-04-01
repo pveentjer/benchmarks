@@ -173,11 +173,6 @@ done
 
 scripts_path="benchmarks_path_var/scripts/aeron"
 
-export AERON_CONDUCTOR.CPU.AFFINITY=<conductor_cpu_core>
-export AERON_SENDER_CPU_AFFINITY=<sender_cpu_core>
-export AERON_RECEIVER_CPU_AFFINITY=<receiver_cpu_core>
-export AERON_DRIVER_ASYNC_EXECUTOR_CPU_AFFINITY=<async_executor_cpu_core>
-
 driver_properties="echo -e \"\
 aeron.dir=aeron_dir_var
 aeron.file.page.size=file_page_size_var
