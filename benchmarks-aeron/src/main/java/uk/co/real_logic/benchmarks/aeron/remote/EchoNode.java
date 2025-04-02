@@ -89,15 +89,15 @@ public final class EchoNode implements AutoCloseable, Runnable
                     .commit();
             }
         };
-
-        awaitConnected(
-            () -> subscription.isConnected() && publication.isConnected() && publication.availableWindow() > 0,
-            connectionTimeoutNs(),
-            SystemNanoClock.INSTANCE);
     }
 
     public void run()
     {
+        awaitConnected(
+            () -> subscription.isConnected() && publication.isConnected() && publication.availableWindow() > 0,
+            connectionTimeoutNs(),
+            SystemNanoClock.INSTANCE);
+
         final IdleStrategy idleStrategy = idleStrategy();
 
         final AtomicBoolean running = this.running;

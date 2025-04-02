@@ -56,7 +56,8 @@ public final class ReplayNode implements AutoCloseable, Runnable
     private final MediaDriver mediaDriver;
     private final AeronArchive aeronArchive;
     private final boolean ownsArchiveClient;
-    private final Image image;
+    private final int sessionId;
+    private Image image;
 
     ReplayNode(final AtomicBoolean running)
     {
@@ -89,7 +90,7 @@ public final class ReplayNode implements AutoCloseable, Runnable
         final String replayChannel = replayChannel();
         final int replayStreamId = replayStreamId();
         final long replaySessionId = replayFullRecording(aeronArchive, recordingId, replayChannel, replayStreamId);
-        final int sessionId = (int)replaySessionId;
+        this.sessionId = (int)replaySessionId;
 
         subscription = aeron.addSubscription(addSessionId(replayChannel, sessionId), replayStreamId);
 
@@ -109,17 +110,17 @@ public final class ReplayNode implements AutoCloseable, Runnable
                     .commit();
             }
         };
+    }
 
+    public void run()
+    {
         awaitConnected(
             () -> subscription.isConnected() && publication.isConnected(),
             connectionTimeoutNs(),
             SystemNanoClock.INSTANCE);
 
         image = subscription.imageBySessionId(sessionId);
-    }
 
-    public void run()
-    {
         final IdleStrategy idleStrategy = idleStrategy();
 
         final AtomicBoolean running = this.running;
