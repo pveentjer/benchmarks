@@ -132,9 +132,9 @@ class FailoverTestRigTest
                 .clusterDirectoryName(clusterDirectoryName)
                 .clusterMemberId(clusterMemberId)
                 .clusterMembers(
-                    "0,localhost:20000,localhost:20001,localhost:20002,localhost:20003,localhost:8010|" +
-                        "1,localhost:20004,localhost:20005,localhost:20006,localhost:20007,localhost:8011|" +
-                        "2,localhost:20008,localhost:20009,localhost:20010,localhost:20011,localhost:8012")
+                "0,localhost:20000,localhost:20001,localhost:20002,localhost:20003,localhost:8010|" +
+                "1,localhost:20004,localhost:20005,localhost:20006,localhost:20007,localhost:8011|" +
+                "2,localhost:20008,localhost:20009,localhost:20010,localhost:20011,localhost:8012")
                 .ingressChannel("aeron:udp?term-length=64k")
                 .replicationChannel("aeron:udp?endpoint=localhost:0")
                 .errorHandler(printingErrorHandler("consensus-module"));
