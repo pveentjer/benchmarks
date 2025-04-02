@@ -48,6 +48,7 @@ public final class ArchiveNode implements AutoCloseable, Runnable
     private final boolean ownsArchiveClient;
     private final ExclusivePublication publication;
     private final Subscription subscription;
+    private final Aeron aeron;
 
     ArchiveNode(final AtomicBoolean running)
     {
@@ -65,7 +66,7 @@ public final class ArchiveNode implements AutoCloseable, Runnable
         this.aeronArchive = aeronArchive;
         this.ownsArchiveClient = ownsArchiveClient;
 
-        final Aeron aeron = aeronArchive.context().aeron();
+        this.aeron = aeronArchive.context().aeron();
 
         subscription = aeron.addSubscription(destinationChannel(), destinationStreamId());
 
@@ -76,17 +77,17 @@ public final class ArchiveNode implements AutoCloseable, Runnable
         final int publicationSessionId = publication.sessionId();
         final String channel = addSessionId(recordChannel, publicationSessionId);
         aeronArchive.startRecording(channel, recordStreamId, LOCAL, true);
+    }
 
+    public void run()
+    {
         awaitConnected(
             () -> subscription.isConnected() && publication.isConnected(),
             connectionTimeoutNs(),
             SystemNanoClock.INSTANCE);
 
-        awaitRecordingStart(aeron, publicationSessionId, aeronArchive.archiveId());
-    }
+        awaitRecordingStart(aeron, publication.sessionId(), aeronArchive.archiveId());
 
-    public void run()
-    {
         pipeMessages(subscription, publication, running);
     }
 
