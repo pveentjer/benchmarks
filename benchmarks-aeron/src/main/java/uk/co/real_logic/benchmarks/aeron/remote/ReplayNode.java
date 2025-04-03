@@ -115,7 +115,7 @@ public final class ReplayNode implements AutoCloseable, Runnable
     public void run()
     {
         awaitConnected(
-            () -> subscription.isConnected() && publication.isConnected(),
+            () -> subscription.isConnected() && publication.availableWindow() > 0,
             connectionTimeoutNs(),
             SystemNanoClock.INSTANCE);
 
