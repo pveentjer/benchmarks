@@ -22,15 +22,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InOrder;
 
 import java.io.File;
 import java.io.PrintStream;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static uk.co.real_logic.benchmarks.remote.MessageTransceiver.CHECKSUM;
@@ -86,6 +88,21 @@ class LoadTestRigTest
             .build();
     }
 
+    @ParameterizedTest
+    @CsvSource({
+        "NANOSECONDS,1",
+        "MICROSECONDS,1000",
+        "MILLISECONDS,1000000",
+        "SECONDS,1000000000",
+        "MINUTES,60000000000",
+        "HOURS,3600000000000",
+        "DAYS,86400000000000",
+    })
+    void outputScaleRatio(final TimeUnit timeUnit, final double expectedScaleRatio)
+    {
+        assertEquals(expectedScaleRatio, LoadTestRig.outputScaleRatio(timeUnit), 1e-6);
+    }
+
     @Test
     void constructorThrowsNullPointerExceptionIfConfigurationIsNull()
     {
@@ -103,6 +120,7 @@ class LoadTestRigTest
             .warmupMessageRate(1)
             .iterations(1)
             .messageRate(1)
+            .outputTimeUnit(NANOSECONDS)
             .messageTransceiverClass(configuration.messageTransceiverClass())
             .idleStrategy(idleStrategy)
             .outputDirectory(configuration.outputDirectory())
@@ -143,12 +161,10 @@ class LoadTestRigTest
         inOrder.verify(messageTransceiver).send(1, configuration.messageLength(), nanoTime, CHECKSUM);
         inOrder.verify(progressReporter).reportProgress(nanoTime, nanoTime, 1, 1);
         inOrder.verify(progressReporter).reset();
-        inOrder.verify(out).printf("%nHistogram of RTT latencies in microseconds.%n");
-        inOrder.verify(persistedHistogram).outputPercentileDistribution(out, 1000.0);
+        inOrder.verify(out).printf("%nHistogram of RTT latencies in NANOSECONDS.%n");
+        inOrder.verify(persistedHistogram).outputPercentileDistribution(out, 1.0);
         inOrder.verify(persistedHistogram).saveToFile(
-            configuration.outputDirectory(),
-            configuration.outputFileNamePrefix(),
-            OK);
+            configuration.outputDirectory(), configuration.outputFileNamePrefix(), OK);
         inOrder.verify(messageTransceiver).destroy();
         inOrder.verify(persistedHistogram).close();
         inOrder.verifyNoMoreInteractions();
@@ -180,6 +196,8 @@ class LoadTestRigTest
 
         loadTestRig.run();
 
+        verify(out).printf("%nHistogram of RTT latencies in MICROSECONDS.%n");
+        verify(persistedHistogram).outputPercentileDistribution(out, 1000.0);
         verify(out).printf("%n*** WARNING: Target message rate not achieved: expected to send %,d messages in " +
             "total but managed to send only %,d messages (loss %.4f%%)!%n", 15L, 2L, 86.66666666666667d);
     }
@@ -192,6 +210,7 @@ class LoadTestRigTest
             .iterations(1)
             .messageRate(3)
             .batchSize(200)
+            .outputTimeUnit(MINUTES)
             .messageTransceiverClass(configuration.messageTransceiverClass())
             .idleStrategy(idleStrategy)
             .outputDirectory(configuration.outputDirectory())

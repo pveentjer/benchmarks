@@ -25,6 +25,7 @@ import org.agrona.concurrent.SystemNanoClock;
 
 import java.io.PrintStream;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 import static java.lang.Math.min;
@@ -144,9 +145,9 @@ public final class LoadTestRig
             final SendResult result = send(configuration.iterations(), configuration.messageRate());
             progressReporter.reset();
 
-            out.printf("%nHistogram of RTT latencies in microseconds.%n");
+            out.printf("%nHistogram of RTT latencies in " + configuration.outputTimeUnit() + ".%n");
             final PersistedHistogram histogram = persistedHistogram;
-            histogram.outputPercentileDistribution(out, 1000.0);
+            histogram.outputPercentileDistribution(out, outputScaleRatio(configuration.outputTimeUnit()));
 
             final long expectedTotalNumberOfMessages = configuration.iterations() * (long)configuration.messageRate();
             warnIfTargetRateNotAchieved(result, expectedTotalNumberOfMessages);
@@ -324,6 +325,20 @@ public final class LoadTestRig
             LangUtil.rethrowUnchecked(ex);
             throw new Error();
         }
+    }
+
+    static double outputScaleRatio(final TimeUnit timeUnit)
+    {
+        return switch (timeUnit)
+        {
+            case NANOSECONDS -> 1.0;
+            case MICROSECONDS -> 1000.0;
+            case MILLISECONDS -> 1_000_000.0;
+            case SECONDS -> 1_000_000_000.0;
+            case MINUTES -> 60 * 1_000_000_000.0;
+            case HOURS -> 60 * 60 * 1_000_000_000.0;
+            case DAYS -> 24 * 60 * 60 * 1_000_000_000.0;
+        };
     }
 
     public static void main(final String[] args) throws Exception

@@ -42,6 +42,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -470,6 +471,7 @@ class ConfigurationTest
             "\n    idleStrategy=NoOpIdleStrategy{alias=noop}" +
             "\n    trackHistory=false" +
             "\n    reportProgress=false" +
+            "\n    outputTimeUnit=MICROSECONDS" +
             "\n    outputDirectory=" + Paths.get("results").toAbsolutePath() +
             "\n    outputFileNamePrefix=my-file_rate=777K_batch=2_length=64" +
             "_sha=73ccec448ba12264acb12e7f9f36fddc73e8c62e43549b786a901c88891610c9" +
@@ -562,6 +564,7 @@ class ConfigurationTest
         setProperty(OUTPUT_FILE_NAME_PROP_NAME, "test-out-prefix");
         setProperty(MESSAGE_RATE_PROP_NAME, "42K");
         setProperty(MESSAGE_TRANSCEIVER_PROP_NAME, InMemoryMessageTransceiver.class.getName());
+        setProperty(OUTPUT_TIME_UNIT_PROPERTY_NAME, "days");
 
         final Configuration configuration = fromSystemProperties();
 
@@ -574,6 +577,7 @@ class ConfigurationTest
         assertSame(InMemoryMessageTransceiver.class, configuration.messageTransceiverClass());
         assertSame(BusySpinIdleStrategy.INSTANCE, configuration.idleStrategy());
         assertEquals(Paths.get("results").toAbsolutePath(), configuration.outputDirectory());
+        assertEquals(TimeUnit.DAYS, configuration.outputTimeUnit());
     }
 
     @Test

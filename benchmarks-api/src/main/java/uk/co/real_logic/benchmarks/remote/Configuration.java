@@ -37,10 +37,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.System.getProperty;
 import static java.lang.reflect.Modifier.isAbstract;
@@ -185,6 +187,11 @@ public final class Configuration
     public static final String REPORT_PROGRESS_PROP_NAME = "uk.co.real_logic.benchmarks.remote.report.progress";
 
     /**
+     * Name of property to define output time unit. Default value: microseconds.
+     */
+    public static final String OUTPUT_TIME_UNIT_PROPERTY_NAME = "uk.co.real_logic.benchmarks.remote.output.time.unit";
+
+    /**
      * Max message rate allowed, i.e. 1 message per nanosecond.
      */
     public static final int MAX_MESSAGE_RATE = 1_000_000_000;
@@ -220,6 +227,7 @@ public final class Configuration
     private final String outputFileNamePrefix;
     private final boolean trackHistory;
     private final boolean reportProgress;
+    private final TimeUnit outputTimeUnit;
 
     private Configuration(final Builder builder)
     {
@@ -238,6 +246,7 @@ public final class Configuration
         logsDir = resolveLogsDir(outputDirectory);
         trackHistory = builder.trackHistory;
         reportProgress = builder.reportProgress;
+        outputTimeUnit = builder.outputTimeUnit;
         rate = rateAsString();
         outputFileNamePrefix = computeFileNamePrefix(builder.outputFileNamePrefix, builder.systemProperties);
     }
@@ -373,6 +382,16 @@ public final class Configuration
     }
 
     /**
+     * Output time unit for the latency histogram. Defaults to microseconds.
+     *
+     * @return latency history time unit.
+     */
+    public TimeUnit outputTimeUnit()
+    {
+        return outputTimeUnit;
+    }
+
+    /**
      * Output file name prefix used for creating the file name to persist the results histogram.
      *
      * @return output file name prefix.
@@ -395,6 +414,7 @@ public final class Configuration
             "\n    idleStrategy=" + idleStrategy +
             "\n    trackHistory=" + trackHistory +
             "\n    reportProgress=" + reportProgress +
+            "\n    outputTimeUnit=" + outputTimeUnit +
             "\n    outputDirectory=" + outputDirectory +
             "\n    outputFileNamePrefix=" + outputFileNamePrefix +
             "\n}";
@@ -449,6 +469,7 @@ public final class Configuration
         private String outputFileNamePrefix;
         private boolean trackHistory = DEFAULT_TRACK_HISTORY;
         private boolean reportProgress = DEFAULT_REPORT_PROGRESS;
+        private TimeUnit outputTimeUnit = TimeUnit.MICROSECONDS;
 
         /**
          * Set the number of warmup iterations.
@@ -596,6 +617,18 @@ public final class Configuration
         }
 
         /**
+         * Set the output time unit, i.e. time resolution for the latency histogram.
+         *
+         * @param timeUnit for the output histogram.
+         * @return this for a fluent API.
+         */
+        public Builder outputTimeUnit(final TimeUnit timeUnit)
+        {
+            this.outputTimeUnit = timeUnit;
+            return this;
+        }
+
+        /**
          * Create a new instance of the {@link Configuration} class from this builder.
          *
          * @return a {@link Configuration} instance
@@ -663,6 +696,12 @@ public final class Configuration
         if (isPropertyProvided(REPORT_PROGRESS_PROP_NAME))
         {
             builder.reportProgress(Boolean.getBoolean(REPORT_PROGRESS_PROP_NAME));
+        }
+
+        if (isPropertyProvided(OUTPUT_TIME_UNIT_PROPERTY_NAME))
+        {
+            builder.outputTimeUnit(TimeUnit.valueOf(
+                System.getProperty(OUTPUT_TIME_UNIT_PROPERTY_NAME).toUpperCase(Locale.UK)));
         }
 
         builder
