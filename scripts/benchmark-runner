@@ -87,11 +87,11 @@ then
 fi
 
 JVM_OPTS="${JVM_OPTS:-""} \
--Duk.co.real_logic.benchmarks.remote.warmup.iterations=${warmupIterations} \
--Duk.co.real_logic.benchmarks.remote.warmup.message.rate=${warmupMessageRate} \
--Duk.co.real_logic.benchmarks.remote.output.file=${outputFileName} \
--Duk.co.real_logic.benchmarks.remote.iterations=${iterations} \
--Duk.co.real_logic.benchmarks.remote.message.rate=${messageRate} \
--Duk.co.real_logic.benchmarks.remote.batch.size=${burstSize} \
--Duk.co.real_logic.benchmarks.remote.message.length=${messageLength}" \
+-Dio.aeron.benchmarks.remote.warmup.iterations=${warmupIterations} \
+-Dio.aeron.benchmarks.remote.warmup.message.rate=${warmupMessageRate} \
+-Dio.aeron.benchmarks.remote.output.file=${outputFileName} \
+-Dio.aeron.benchmarks.remote.iterations=${iterations} \
+-Dio.aeron.benchmarks.remote.message.rate=${messageRate} \
+-Dio.aeron.benchmarks.remote.batch.size=${burstSize} \
+-Dio.aeron.benchmarks.remote.message.length=${messageLength}" \
  ${command}

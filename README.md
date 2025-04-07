@@ -97,8 +97,8 @@ Please read the documentation in the `scripts/kafka` directory for more informat
 The `scripts` directory contains scripts to run the _remote benchmarks_, i.e. the benchmarks that involve multiple
 machines where one is the _client_ (the benchmarking harness) and the rest are the _server nodes_.
 
-The `uk.co.real_logic.benchmarks.remote.LoadTestRig` class implements the benchmarking harness. Whereas the
-`uk.co.real_logic.benchmarks.remote.Configuration` class provides the configuration for the benchmarking harness.
+The `remote.io.aeron.benchmarks.LoadTestRig` class implements the benchmarking harness. Whereas the
+`remote.io.aeron.benchmarks.Configuration` class provides the configuration for the benchmarking harness.
 
 Before the benchmarks can be executed they have to be built. This can be done by running the following command in the
 root directory of this project:
@@ -189,14 +189,14 @@ Here is an example of running the Aeron echo benchmark using the embedded Java M
 server (`192.168.0.20`) and client (`192.168.0.10`).
 ```bash
 server:~/benchmarks/scripts$ JVM_OPTS="\
--Duk.co.real_logic.benchmarks.aeron.remote.embedded.media.driver=true \
--Duk.co.real_logic.benchmarks.aeron.remote.source.channel=aeron:udp?endpoint=192.168.0.10:13000 \
--Duk.co.real_logic.benchmarks.aeron.remote.destination.channel=aeron:udp?endpoint=192.168.0.20:13001" aeron/echo-server
+-Dio.aeron.benchmarks.aeron.remote.embedded.media.driver=true \
+-Dio.aeron.benchmarks.aeron.remote.source.channel=aeron:udp?endpoint=192.168.0.10:13000 \
+-Dio.aeron.benchmarks.aeron.remote.destination.channel=aeron:udp?endpoint=192.168.0.20:13001" aeron/echo-server
 
 client:~/benchmarks/scripts$ JVM_OPTS="\
--Duk.co.real_logic.benchmarks.aeron.remote.embedded.media.driver=true \
--Duk.co.real_logic.benchmarks.aeron.remote.source.channel=aeron:udp?endpoint=192.168.0.10:13000 \
--Duk.co.real_logic.benchmarks.aeron.remote.destination.channel=aeron:udp?endpoint=192.168.0.20:13001" \
+-Dio.aeron.benchmarks.aeron.remote.embedded.media.driver=true \
+-Dio.aeron.benchmarks.aeron.remote.source.channel=aeron:udp?endpoint=192.168.0.10:13000 \
+-Dio.aeron.benchmarks.aeron.remote.destination.channel=aeron:udp?endpoint=192.168.0.20:13001" \
 ./benchmark-runner --output-file "aeron-echo-test" --messages "100K" --message-length "288" --iterations 60 "aeron/echo-client"
 ```
 _**Note**: At the end of a single run the server-side process (e.g. `aeron/echo-server`) will exit, i.e. in order to do

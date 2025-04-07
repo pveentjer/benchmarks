@@ -18,7 +18,7 @@ taskset -c "${CGROUP_CPUSETS[1]}" \
 "$@" aeron/echo-client &
 
 # Wait for the Java process to be up
-f_wait_for_process 'uk.co.real_logic.benchmarks.remote.LoadTestRig'
+f_wait_for_process 'io.aeron.benchmarks.remote.LoadTestRig'
 
 # Additional wait, because sometimes the thread isn't ready yet :-(
 sleep 2

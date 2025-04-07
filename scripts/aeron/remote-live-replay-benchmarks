@@ -254,8 +254,8 @@ do
       server_driver="${server_driver//driver_aeron_dpdk_gateway_ipv4_address_var/${SERVER_AERON_DPDK_GATEWAY_IPV4_ADDRESS}}"
       server_driver="${server_driver//driver_aeron_dpdk_local_ipv4_address_var/${SERVER_AERON_DPDK_LOCAL_IPV4_ADDRESS}}"
 
-      client_class_name="uk.co.real_logic.benchmarks.remote.LoadTestRig"
-      server_class_name="uk.co.real_logic.benchmarks.aeron.remote.ArchiveNode"
+      client_class_name="io.aeron.benchmarks.remote.LoadTestRig"
+      server_class_name="io.aeron.benchmarks.aeron.remote.ArchiveNode"
 
       server_interface=''
       if [[ -n "${SERVER_INTERFACE}" ]]
@@ -300,17 +300,17 @@ do
         "${stop_server}" \
         "${CLIENT_BENCHMARKS_PATH}/${output_dir}/${client_md}-vs-${server_md}_${context}_fsync=${fsync}_mtu=${mtu}" \
         "${SERVER_BENCHMARKS_PATH}/${output_dir}/${client_md}-vs-${server_md}_${context}_fsync=${fsync}_mtu=${mtu}" \
-        "-Duk.co.real_logic.benchmarks.remote.output.file=${test} \
-        -Duk.co.real_logic.benchmarks.remote.output.time.unit=${OUTPUT_TIME_UNIT:-MICROSECONDS} \
-        -Duk.co.real_logic.benchmarks.remote.track.history=${TRACK_HISTORY:-false}\
-        -Duk.co.real_logic.benchmarks.remote.report.progress=${REPORT_PROGRESS:-false}\
-        -Duk.co.real_logic.benchmarks.aeron.remote.destination.channel=aeron:udp?endpoint=${DESTINATION_IP}:13000${client_interface} \
-        -Duk.co.real_logic.benchmarks.aeron.remote.source.channel=aeron:udp?endpoint=${SOURCE_IP}:13100${client_interface} \
+        "-Dio.aeron.benchmarks.remote.output.file=${test} \
+        -Dio.aeron.benchmarks.remote.output.time.unit=${OUTPUT_TIME_UNIT:-MICROSECONDS} \
+        -Dio.aeron.benchmarks.remote.track.history=${TRACK_HISTORY:-false}\
+        -Dio.aeron.benchmarks.remote.report.progress=${REPORT_PROGRESS:-false}\
+        -Dio.aeron.benchmarks.aeron.remote.destination.channel=aeron:udp?endpoint=${DESTINATION_IP}:13000${client_interface} \
+        -Dio.aeron.benchmarks.aeron.remote.source.channel=aeron:udp?endpoint=${SOURCE_IP}:13100${client_interface} \
         -Daeron.archive.control.channel=aeron:udp?endpoint=${DESTINATION_IP}:13200${client_interface} \
         -Daeron.archive.control.response.channel=aeron:udp?endpoint=${SOURCE_IP}:0${client_interface} \
         -Daeron.archive.message.timeout=30000000000" \
-        "-Duk.co.real_logic.benchmarks.aeron.remote.destination.channel=aeron:udp?endpoint=${DESTINATION_IP}:13000${server_interface} \
-        -Duk.co.real_logic.benchmarks.aeron.remote.source.channel=aeron:udp?endpoint=${SOURCE_IP}:13100${server_interface} \
+        "-Dio.aeron.benchmarks.aeron.remote.destination.channel=aeron:udp?endpoint=${DESTINATION_IP}:13000${server_interface} \
+        -Dio.aeron.benchmarks.aeron.remote.source.channel=aeron:udp?endpoint=${SOURCE_IP}:13100${server_interface} \
         -Daeron.archive.control.channel=aeron:udp?endpoint=${DESTINATION_IP}:13200${server_interface} \
         -Daeron.archive.control.response.channel=aeron:udp?endpoint=${DESTINATION_IP}:0${server_interface} \
         -Daeron.archive.replication.channel=aeron:udp?endpoint=${DESTINATION_IP}:0${server_interface} \

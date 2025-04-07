@@ -16,7 +16,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "uk.co.real_logic.benchmarks.grpc.remote";
+option java_package = "io.aeron.benchmarks.grpc.remote";
 option java_outer_classname = "EchoBenchmarksProto";
 option objc_class_prefix = "GBP";
 

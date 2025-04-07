@@ -20,6 +20,6 @@ set -euxo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 exec "${DIR}/../run-java" \
-  uk.co.real_logic.benchmarks.grpc.remote.EchoServer \
+  io.aeron.benchmarks.grpc.remote.EchoServer \
   "${DIR}/benchmark.properties" \
   "$@"

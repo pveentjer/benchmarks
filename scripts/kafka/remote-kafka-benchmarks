@@ -123,9 +123,9 @@ do
     echo -e "\n Testing scenario: '${test}'\n"
 
     start_client="export JAVA_HOME=\"${CLIENT_JAVA_HOME}\" \
-    ; $(kill_java_process "uk.co.real_logic.benchmarks.remote.LoadTestRig") \
+    ; $(kill_java_process "io.aeron.benchmarks.remote.LoadTestRig") \
       ; numactl --membind=${CLIENT_CPU_NODE} --cpunodebind=${CLIENT_CPU_NODE} ${onload} ${CLIENT_BENCHMARKS_PATH}/scripts/kafka/client &
-      $(await_java_process_start "uk.co.real_logic.benchmarks.remote.LoadTestRig"); \
+      $(await_java_process_start "io.aeron.benchmarks.remote.LoadTestRig"); \
       $(pin_thread "\${pid}" "load-test-rig" "${CLIENT_LOAD_TEST_RIG_MAIN_CPU_CORE}") \
       && tail --pid=\$! -f /dev/null"
 
@@ -149,7 +149,7 @@ do
       "${stop_server}" \
       "${CLIENT_BENCHMARKS_PATH}/${output_dir}/${test:1}" \
       "${SERVER_BENCHMARKS_PATH}/${output_dir}/${test:1}" \
-      "-Duk.co.real_logic.benchmarks.remote.output.file=${test} \
+      "-Dio.aeron.benchmarks.remote.output.file=${test} \
       -Dbootstrap.servers=${SERVER_HOST}:${port} \
       -Dsecurity.protocol=${protocol} \
       -Dssl.truststore.location=${CLIENT_BENCHMARKS_PATH}/certificates/truststore.p12 \

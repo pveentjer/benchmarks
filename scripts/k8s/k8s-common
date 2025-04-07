@@ -77,10 +77,10 @@ function f_set_jvm_opts() {
 
   fi
 
-  export JVM_OPTS="-Duk.co.real_logic.benchmarks.remote.output.directory=/dev/shm/results \
--Duk.co.real_logic.benchmarks.aeron.remote.embedded.media.driver=false \
--Duk.co.real_logic.benchmarks.aeron.remote.source.channel=aeron:udp?endpoint=${NODE1_ADDRESS:? Could not find NODE1_ADDRESS}:13000${SELECT_INTERFACE} \
--Duk.co.real_logic.benchmarks.aeron.remote.destination.channel=aeron:udp?endpoint=${NODE0_ADDRESS:? Could not find NODE0_ADDRESS}:13001${SELECT_INTERFACE}"
+  export JVM_OPTS="-Dio.aeron.benchmarks.remote.output.directory=/dev/shm/results \
+-Dio.aeron.benchmarks.aeron.remote.embedded.media.driver=false \
+-Dio.aeron.benchmarks.aeron.remote.source.channel=aeron:udp?endpoint=${NODE1_ADDRESS:? Could not find NODE1_ADDRESS}:13000${SELECT_INTERFACE} \
+-Dio.aeron.benchmarks.aeron.remote.destination.channel=aeron:udp?endpoint=${NODE0_ADDRESS:? Could not find NODE0_ADDRESS}:13001${SELECT_INTERFACE}"
 }
 
 #####################################################################################

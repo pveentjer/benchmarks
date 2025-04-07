@@ -24,7 +24,7 @@ export PROCESS_FILE_NAME
 
 exec "${DIR}/../run-java" \
   -Daeron.archive.recording.events.enabled=false \
-  uk.co.real_logic.benchmarks.aeron.remote.ArchiveNode \
+  io.aeron.benchmarks.aeron.remote.ArchiveNode \
   "${DIR}/low-latency-driver.properties" \
   "${DIR}/low-latency-archive.properties" \
   "${DIR}/benchmark.properties" \

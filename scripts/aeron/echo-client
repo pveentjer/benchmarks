@@ -22,10 +22,10 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 PROCESS_FILE_NAME="${PROCESS_FILE_NAME:-$(basename "${0}" .sh)}"
 export PROCESS_FILE_NAME
 export JVM_OPTS="${JVM_OPTS:-} \
--Duk.co.real_logic.benchmarks.remote.message.transceiver=uk.co.real_logic.benchmarks.aeron.remote.EchoMessageTransceiver"
+-Dio.aeron.benchmarks.remote.message.transceiver=io.aeron.benchmarks.aeron.remote.EchoMessageTransceiver"
 
 exec "${DIR}/../run-java" \
-  uk.co.real_logic.benchmarks.remote.LoadTestRig \
+  io.aeron.benchmarks.remote.LoadTestRig \
   "${DIR}/low-latency-driver.properties" \
   "${DIR}/benchmark.properties" \
   "$@"
