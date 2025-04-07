@@ -94,7 +94,7 @@ public final class Configuration
     /**
      * Default progress reporting.
      */
-    public static final boolean DEFAULT_REPORT_PROGESS = false;
+    public static final boolean DEFAULT_REPORT_PROGRESS = false;
 
     /**
      * Minimal length in bytes of a single message. Contains enough space to hold a {@code timestamp} and a
@@ -448,7 +448,7 @@ public final class Configuration
         private Properties systemProperties = System.getProperties();
         private String outputFileNamePrefix;
         private boolean trackHistory = DEFAULT_TRACK_HISTORY;
-        private boolean reportProgress = DEFAULT_REPORT_PROGESS;
+        private boolean reportProgress = DEFAULT_REPORT_PROGRESS;
 
         /**
          * Set the number of warmup iterations.
