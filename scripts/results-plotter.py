@@ -38,6 +38,7 @@ def main():
     parser.add_argument('--recursive', help='recursively looks for aggregated results in child directories', action='store_true')
     parser.add_argument('--hide-field-name', help='hides the field names in labels', action='store_true')
     parser.add_argument('--hide-summaries', help='hides the summary boxes', action='store_true')
+    parser.add_argument('--output-units', default='us', help='output time unit. Defaults to `us`')
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     group_by = args.group_by.strip().split(',')
@@ -59,7 +60,7 @@ def main():
 
     output_path = os.path.abspath(args.directories[0])
 
-    plot_graphs(output_path, paths, args.percentiles_range_max, regex_common, group_by, filters, excludes, args.title, args.hide_field_name, args.hide_summaries)
+    plot_graphs(output_path, paths, args.percentiles_range_max, regex_common, group_by, filters, excludes, args.title, args.hide_field_name, args.hide_summaries, args.output_units)
 
 
 def lookup_results_recursive(path, paths):
@@ -73,7 +74,7 @@ def lookup_results_recursive(path, paths):
                 lookup_results_recursive(new_path, paths)
 
 
-def plot_graphs(output_path, paths, percentiles_range_max, regex, group_by, filters, excludes, custom_title, hide_field_name, hide_summaries):
+def plot_graphs(output_path, paths, percentiles_range_max, regex, group_by, filters, excludes, custom_title, hide_field_name, hide_summaries, output_units):
     """Plots the graphs by invoking hdr-plot"""
 
     files = []
@@ -112,7 +113,7 @@ def plot_graphs(output_path, paths, percentiles_range_max, regex, group_by, filt
             nosummary = ''
             if hide_summaries:
                 nosummary = ' --nosummary '
-            os.system(f'hdr-plot --noversion --units us --summary-fields=min,median,p99,p999,p9999,p99999,max --percentiles-range-max={percentiles_range_max} --output {filename} --title "{title}" {nosummary} {histogram_files}')
+            os.system(f'hdr-plot --noversion --units {output_units} --summary-fields=min,median,p99,p999,p9999,p99999,max --percentiles-range-max={percentiles_range_max} --output {filename} --title "{title}" {nosummary} {histogram_files}')
             shutil.copyfile(os.path.join(tmpdir, filename), os.path.join(output_path, filename))
 
 
