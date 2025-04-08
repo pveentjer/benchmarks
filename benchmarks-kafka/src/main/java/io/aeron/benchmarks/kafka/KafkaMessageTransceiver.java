@@ -15,6 +15,8 @@
  */
 package io.aeron.benchmarks.kafka;
 
+import io.aeron.benchmarks.Configuration;
+import io.aeron.benchmarks.MessageTransceiver;
 import org.HdrHistogram.ValueRecorder;
 import org.agrona.LangUtil;
 import org.agrona.concurrent.NanoClock;
@@ -28,26 +30,25 @@ import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
-import io.aeron.benchmarks.Configuration;
-import io.aeron.benchmarks.MessageTransceiver;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.aeron.benchmarks.kafka.KafkaConfig.*;
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static java.time.Duration.ofMillis;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.agrona.BitUtil.SIZE_OF_LONG;
 import static org.agrona.CloseHelper.closeAll;
-import static io.aeron.benchmarks.kafka.KafkaConfig.*;
 
 public class KafkaMessageTransceiver extends MessageTransceiver
 {
@@ -115,8 +116,7 @@ public class KafkaMessageTransceiver extends MessageTransceiver
 
     private void createTopic(final Configuration configuration)
     {
-        final String outputFileNamePrefix = configuration.outputFileNamePrefix();
-        topic = "benchmark-" + outputFileNamePrefix.substring(outputFileNamePrefix.lastIndexOf("sha=") + 4);
+        topic = UUID.randomUUID().toString();
 
         final Properties config = new Properties();
         config.putAll(getCommonProperties());
