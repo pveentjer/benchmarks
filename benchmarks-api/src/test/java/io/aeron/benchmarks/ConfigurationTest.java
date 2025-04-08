@@ -28,7 +28,6 @@ import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -40,17 +39,13 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.EnumSet;
-import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static java.lang.System.setProperty;
-import static java.util.Arrays.asList;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static io.aeron.benchmarks.Configuration.*;
+import static java.lang.System.setProperty;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ConfigurationTest
 {
@@ -183,8 +178,7 @@ class ConfigurationTest
 
         assertEquals(
             "'" + WARMUP_MESSAGE_RATE_PROP_NAME + "' cannot be greater than " + MAX_MESSAGE_RATE + ", got: " +
-            messageRate,
-            ex.getMessage());
+            messageRate, ex.getMessage());
     }
 
     @ParameterizedTest
@@ -352,12 +346,10 @@ class ConfigurationTest
             .messageTransceiverClass(InMemoryMessageTransceiver.class)
             .outputDirectory(tempDir)
             .outputFileNamePrefix("the-prefix")
-            .systemProperties(props("E", "m*c^2"))
             .build();
 
         assertEquals(
-            "the-prefix_rate=12_batch=3_length=75" +
-            "_sha=a2bea3034417edbbe21e66dd9b68d43fe53e287e04a1f6b119741ab9e0729f60",
+            "the-prefix_rate=12_batch=3_length=75",
             configuration.outputFileNamePrefix());
     }
 
@@ -382,7 +374,6 @@ class ConfigurationTest
             .messageTransceiverClass(InMemoryMessageTransceiver.class)
             .outputDirectory(tempDir)
             .outputFileNamePrefix("the-prefix")
-            .systemProperties(props("E", "m*c^2"))
             .build();
 
         final String outputFileNamePrefix = configuration.outputFileNamePrefix();
@@ -398,7 +389,6 @@ class ConfigurationTest
             .messageRate(123)
             .messageTransceiverClass(InMemoryMessageTransceiver.class)
             .outputFileNamePrefix("defaults")
-            .systemProperties(new Properties())
             .build();
 
         assertEquals(123, configuration.messageRate());
@@ -410,8 +400,7 @@ class ConfigurationTest
         assertSame(InMemoryMessageTransceiver.class, configuration.messageTransceiverClass());
         assertSame(BusySpinIdleStrategy.INSTANCE, configuration.idleStrategy());
         assertEquals(Paths.get("results").toAbsolutePath(), configuration.outputDirectory());
-        assertEquals("defaults_rate=123_batch=" + DEFAULT_BATCH_SIZE + "_length=" + MIN_MESSAGE_LENGTH +
-            "_sha=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        assertEquals("defaults_rate=123_batch=" + DEFAULT_BATCH_SIZE + "_length=" + MIN_MESSAGE_LENGTH,
             configuration.outputFileNamePrefix());
     }
 
@@ -457,7 +446,6 @@ class ConfigurationTest
             .messageTransceiverClass(InMemoryMessageTransceiver.class)
             .idleStrategy(NoOpIdleStrategy.INSTANCE)
             .outputFileNamePrefix("my-file")
-            .systemProperties(props("java", "25"))
             .build();
 
         assertEquals("Configuration{" +
@@ -474,7 +462,6 @@ class ConfigurationTest
             "\n    outputTimeUnit=MICROSECONDS" +
             "\n    outputDirectory=" + Paths.get("results").toAbsolutePath() +
             "\n    outputFileNamePrefix=my-file_rate=777K_batch=2_length=64" +
-            "_sha=73ccec448ba12264acb12e7f9f36fddc73e8c62e43549b786a901c88891610c9" +
             "\n}",
             configuration.toString());
     }
@@ -611,48 +598,6 @@ class ConfigurationTest
         assertFalse(configuration.reportProgress());
         assertEquals(outputDirectory.toAbsolutePath(), configuration.outputDirectory());
         assertTrue(configuration.outputFileNamePrefix().startsWith("my-out-file"));
-    }
-
-    @ParameterizedTest
-    @MethodSource("computeSha256Inputs")
-    void computeSha256FromProperties(final Properties properties, final String sha256)
-    {
-        assertEquals(sha256, computeSha256(properties));
-    }
-
-    static List<Arguments> computeSha256Inputs()
-    {
-        return asList(
-            arguments(new Properties(),
-                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
-            arguments(props("emptyKey", ""),
-                "7b0cfdb635b9790840cbe4d9caca23a03240f1d13da3dccd92255e4208127f08"),
-            arguments(props("java", "¯\\_(ツ)_/¯"),
-                "750e8c40c5473ea1d8eae9c27b1fe61b6e8249f87db30fca5ececc57cba14afe"),
-            arguments(props("java", "\uD83E\uDD37"),
-                "75d681403cdcc3fd6ada5cdb383e18c7af2862b750ddc670895471cae30bf76b"),
-            arguments(props("X", "-100", "B", "2", "z", "0", "\uD83E\uDD37", "42", "y", "2.25"),
-                "8bc055dc860587df8a9234d6721e6a482dd707e204f29895eee08aeeaaaf4432"),
-            arguments(props(
-                "\uD83E\uDD37", "42",
-                "B", "2",
-                "X", "-100",
-                "y", "2.25",
-                "z", "0",
-                OUTPUT_FILE_NAME_PROP_NAME, "ignore me",
-                OUTPUT_DIRECTORY_PROP_NAME, "and me too"),
-                "8bc055dc860587df8a9234d6721e6a482dd707e204f29895eee08aeeaaaf4432"));
-    }
-
-    private static Properties props(final String... keyValuePairs)
-    {
-        assertEquals(0, keyValuePairs.length & 1);
-        final Properties properties = new Properties();
-        for (int i = 0; i < keyValuePairs.length; i += 2)
-        {
-            properties.put(keyValuePairs[i], keyValuePairs[i + 1]);
-        }
-        return properties;
     }
 
     private void clearConfigProperties()

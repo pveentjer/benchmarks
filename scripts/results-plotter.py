@@ -8,11 +8,11 @@ usage: results-plotter.py [-h] [--group-by GROUP_BY] [--filter FILTER] [--exclud
 
 The script expects files to be in the format
 
-    <type>_<scenario>_<parameters>_sha=<sha1>-report.hgrm
+    <type>_<scenario>_<parameters>-report.hgrm
 
 e.g.
 
-    echo_java_instance=c5n.9xlarge_window=2m_mtu=8192_so_sndbuf=2m_so_rcvbuf=2m_rcvwnd=2m_rate=100000_batch=1_length=1344_sha=c68b27d86b43946be1a4a1aaebcfa69c4506cb37af013ced29daccf39412d3c3-report.hgrm
+    echo_java_instance=c5n.9xlarge_window=2m_mtu=8192_so_sndbuf=2m_so_rcvbuf=2m_rcvwnd=2m_rate=100000_batch=1_length=1344-report.hgrm
 """
 
 import argparse
@@ -23,7 +23,7 @@ import re
 import sys
 from collections import defaultdict
 
-regex_common = re.compile('(?P<type>[a-z-]+)_(?P<scenario>[^_]+)_(?P<params>([^=_]+=[^_]+_?)+)_sha=(?:[a-z0-9]+)-report.hgrm')
+regex_common = re.compile('(?P<type>[a-z-]+)_(?P<scenario>[^_]+)_(?P<params>([^=_]+=[^_]+_?)+)-report.hgrm')
 regex_params = re.compile('([^=_]+)=([^_]+)')
 
 

@@ -35,23 +35,16 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.System.getProperty;
 import static java.lang.reflect.Modifier.isAbstract;
 import static java.lang.reflect.Modifier.isPublic;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.*;
 import static java.util.Objects.requireNonNull;
 import static org.agrona.BitUtil.SIZE_OF_LONG;
-import static org.agrona.BitUtil.toHex;
 import static org.agrona.Strings.isEmpty;
 
 /**
@@ -199,19 +192,6 @@ public final class Configuration
     private static final int MAX_K_VALUE = Integer.MAX_VALUE / 1000;
     private static final int MAX_M_VALUE = Integer.MAX_VALUE / 1_000_000;
     private static final String LOGS_DIR = "logs";
-    private static final MessageDigest SHA256;
-
-    static
-    {
-        try
-        {
-            SHA256 = MessageDigest.getInstance("SHA-256");
-        }
-        catch (final NoSuchAlgorithmException ex)
-        {
-            throw new Error(ex);
-        }
-    }
 
     private final int warmupIterations;
     private final int iterations;
@@ -248,7 +228,7 @@ public final class Configuration
         reportProgress = builder.reportProgress;
         outputTimeUnit = builder.outputTimeUnit;
         rate = rateAsString();
-        outputFileNamePrefix = computeFileNamePrefix(builder.outputFileNamePrefix, builder.systemProperties);
+        outputFileNamePrefix = computeFileNamePrefix(builder.outputFileNamePrefix);
     }
 
     /**
@@ -436,7 +416,7 @@ public final class Configuration
         }
     }
 
-    private String computeFileNamePrefix(final String outputFileNamePrefix, final Properties systemProperties)
+    private String computeFileNamePrefix(final String outputFileNamePrefix)
     {
         final String prefix = null != outputFileNamePrefix ? outputFileNamePrefix.trim() : "";
         if (prefix.isEmpty())
@@ -447,8 +427,7 @@ public final class Configuration
         return prefix +
             "_rate=" + rate +
             "_batch=" + batchSize +
-            "_length=" + messageLength +
-            "_sha=" + computeSha256(systemProperties);
+            "_length=" + messageLength;
     }
 
     /**
@@ -465,7 +444,6 @@ public final class Configuration
         private Class<? extends MessageTransceiver> messageTransceiverClass;
         private IdleStrategy idleStrategy = BusySpinIdleStrategy.INSTANCE;
         private Path outputDirectory = Paths.get("results");
-        private Properties systemProperties = System.getProperties();
         private String outputFileNamePrefix;
         private boolean trackHistory = DEFAULT_TRACK_HISTORY;
         private boolean reportProgress = DEFAULT_REPORT_PROGRESS;
@@ -636,12 +614,6 @@ public final class Configuration
         public Configuration build()
         {
             return new Configuration(this);
-        }
-
-        Builder systemProperties(final Properties properties)
-        {
-            systemProperties = properties;
-            return this;
         }
     }
 
@@ -989,34 +961,5 @@ public final class Configuration
             }
         }
         return logsDir;
-    }
-
-    static String computeSha256(final Properties properties)
-    {
-        final TreeMap<String, String> sortedProperties = new TreeMap<>();
-        for (final Map.Entry<Object, Object> entry : properties.entrySet())
-        {
-            final String key = (String)entry.getKey();
-            if (!OUTPUT_FILE_NAME_PROP_NAME.equals(key) && !OUTPUT_DIRECTORY_PROP_NAME.equals(key))
-            {
-                sortedProperties.put(key, (String)entry.getValue());
-            }
-        }
-
-        return toHex(computeSha256Digest(sortedProperties));
-    }
-
-    private static byte[] computeSha256Digest(final TreeMap<String, String> properties)
-    {
-        synchronized (SHA256)
-        {
-            SHA256.reset();
-            for (final Map.Entry<String, String> entry : properties.entrySet())
-            {
-                SHA256.update(entry.getKey().getBytes(UTF_8));
-                SHA256.update(entry.getValue().getBytes(UTF_8));
-            }
-            return SHA256.digest();
-        }
     }
 }
