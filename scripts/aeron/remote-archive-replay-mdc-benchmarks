@@ -237,12 +237,12 @@ function start_replay_node()
     ; $(kill_java_process "${node_class_name}") \
     ; ${server_driver} \
     && export JVM_OPTS=\"\
-    -Dio.aeron.benchmarks.aeron.remote.connection.timeout=${connectionTimeout} \
-    -Dio.aeron.benchmarks.remote.output.directory=${output_dir} \
-    -Dio.aeron.benchmarks.aeron.remote.replay.channel=${!replay_channel_var} \
-    -Dio.aeron.benchmarks.aeron.remote.record.channel=${RECORD_CHANNEL} \
-    -Dio.aeron.benchmarks.aeron.remote.source.channel=${SOURCE_CHANNEL} \
-    -Dio.aeron.benchmarks.aeron.remote.receiver.index=${node_id} \
+    -Dio.aeron.benchmarks.aeron.connection.timeout=${connectionTimeout} \
+    -Dio.aeron.benchmarks.output.directory=${output_dir} \
+    -Dio.aeron.benchmarks.aeron.replay.channel=${!replay_channel_var} \
+    -Dio.aeron.benchmarks.aeron.record.channel=${RECORD_CHANNEL} \
+    -Dio.aeron.benchmarks.aeron.source.channel=${SOURCE_CHANNEL} \
+    -Dio.aeron.benchmarks.aeron.receiver.index=${node_id} \
     -Daeron.archive.control.channel=${ARCHIVE_CONTROL_CHANNEL} \
     -Daeron.archive.control.response.channel=${!archive_response_channel_var} \
     ${!extra_properties_var:-}\" PROCESS_FILE_NAME=\"replay-node-${node_id}\" \
@@ -397,9 +397,9 @@ do
       server_driver="${server_driver//driver_aeron_dpdk_gateway_ipv4_address_var/${SERVER_AERON_DPDK_GATEWAY_IPV4_ADDRESS}}"
       server_driver="${server_driver//driver_aeron_dpdk_local_ipv4_address_var/${SERVER_AERON_DPDK_LOCAL_IPV4_ADDRESS}}"
 
-      client_class_name="${CLIENT_CLASS_NAME:-io.aeron.benchmarks.remote.LoadTestRig}"
-      server_class_name="io.aeron.benchmarks.aeron.remote.ArchiveNode"
-      node_class_name="io.aeron.benchmarks.aeron.remote.ReplayNode"
+      client_class_name="${CLIENT_CLASS_NAME:-io.aeron.benchmarks.LoadTestRig}"
+      server_class_name="io.aeron.benchmarks.aeron.ArchiveNode"
+      node_class_name="io.aeron.benchmarks.aeron.ReplayNode"
 
       for rateIndex in "${!messageRates[@]}"
       do
@@ -415,20 +415,20 @@ do
             output_dir="${output_dir_prefix}/${test}_length=${messageLength}_rate=${messageRate}/run-${run}"
 
             start_client="export JVM_OPTS=\"\
-            -Dio.aeron.benchmarks.aeron.remote.connection.timeout=${connectionTimeout}\
-            -Dio.aeron.benchmarks.remote.warmup.iterations=${warmupIterations}\
-            -Dio.aeron.benchmarks.remote.warmup.message.rate=${warmupMessageRate}\
-            -Dio.aeron.benchmarks.remote.iterations=${iterations}\
-            -Dio.aeron.benchmarks.remote.message.rate=${messageRate# }\
-            -Dio.aeron.benchmarks.remote.batch.size=${burstSize# }\
-            -Dio.aeron.benchmarks.remote.message.length=${messageLength# }\
-            -Dio.aeron.benchmarks.remote.output.file=${test}\
-            -Dio.aeron.benchmarks.remote.track.history=${TRACK_HISTORY:-false}\
-            -Dio.aeron.benchmarks.remote.report.progress=${REPORT_PROGRESS:-false}\
-            -Dio.aeron.benchmarks.remote.output.directory=${CLIENT_BENCHMARKS_PATH}/${output_dir}\
-            -Dio.aeron.benchmarks.aeron.remote.destination.channel=${DESTINATION_CHANNEL}\
-            -Dio.aeron.benchmarks.aeron.remote.source.channel=${SOURCE_CHANNEL}\
-            -Dio.aeron.benchmarks.aeron.remote.receiver.count=${RECEIVER_COUNT}\
+            -Dio.aeron.benchmarks.aeron.connection.timeout=${connectionTimeout}\
+            -Dio.aeron.benchmarks.warmup.iterations=${warmupIterations}\
+            -Dio.aeron.benchmarks.warmup.message.rate=${warmupMessageRate}\
+            -Dio.aeron.benchmarks.iterations=${iterations}\
+            -Dio.aeron.benchmarks.message.rate=${messageRate# }\
+            -Dio.aeron.benchmarks.batch.size=${burstSize# }\
+            -Dio.aeron.benchmarks.message.length=${messageLength# }\
+            -Dio.aeron.benchmarks.output.file=${test}\
+            -Dio.aeron.benchmarks.track.history=${TRACK_HISTORY:-false}\
+            -Dio.aeron.benchmarks.report.progress=${REPORT_PROGRESS:-false}\
+            -Dio.aeron.benchmarks.output.directory=${CLIENT_BENCHMARKS_PATH}/${output_dir}\
+            -Dio.aeron.benchmarks.aeron.destination.channel=${DESTINATION_CHANNEL}\
+            -Dio.aeron.benchmarks.aeron.source.channel=${SOURCE_CHANNEL}\
+            -Dio.aeron.benchmarks.aeron.receiver.count=${RECEIVER_COUNT}\
             ${CLIENT_EXTRA_PROPERTIES:-}\"\
             && export JAVA_HOME=\"${CLIENT_JAVA_HOME}\" PROCESS_FILE_NAME=\"client-media-driver\"\
             ; $(kill_java_process "${client_class_name}")\
@@ -446,10 +446,10 @@ do
             ; ${server_driver} \
             && export JAVA_HOME=\"${SERVER_JAVA_HOME}\" PROCESS_FILE_NAME=\"archive-node\" \
             JVM_OPTS=\"\
-            -Dio.aeron.benchmarks.aeron.remote.connection.timeout=${connectionTimeout}\
-            -Dio.aeron.benchmarks.remote.output.directory=${SERVER_BENCHMARKS_PATH}/${output_dir} \
-            -Dio.aeron.benchmarks.aeron.remote.destination.channel=${DESTINATION_CHANNEL} \
-            -Dio.aeron.benchmarks.aeron.remote.record.channel=${RECORD_CHANNEL} \
+            -Dio.aeron.benchmarks.aeron.connection.timeout=${connectionTimeout}\
+            -Dio.aeron.benchmarks.output.directory=${SERVER_BENCHMARKS_PATH}/${output_dir} \
+            -Dio.aeron.benchmarks.aeron.destination.channel=${DESTINATION_CHANNEL} \
+            -Dio.aeron.benchmarks.aeron.record.channel=${RECORD_CHANNEL} \
             -Daeron.archive.control.channel=${ARCHIVE_CONTROL_CHANNEL} \
             -Daeron.archive.control.response.channel=${ARCHIVE_RESPONSE_CHANNEL} \
             -Daeron.archive.replication.channel=${ARCHIVE_REPLICATION_CHANNEL} \

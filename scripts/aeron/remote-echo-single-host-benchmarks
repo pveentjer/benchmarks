@@ -189,11 +189,11 @@ function start_node()
     ; $(kill_java_process "${server_class_name}") \
     ; ${server_driver} \
     && export JVM_OPTS=\"\
-    -Dio.aeron.benchmarks.aeron.remote.connection.timeout=${connectionTimeout} \
-    -Dio.aeron.benchmarks.remote.output.directory=${output_dir} \
-    -Dio.aeron.benchmarks.aeron.remote.destination.channel=${!destination_channel_var} \
-    -Dio.aeron.benchmarks.aeron.remote.source.channel=${!source_channel_var} \
-    -Dio.aeron.benchmarks.aeron.remote.receiver.index=${node_id} \
+    -Dio.aeron.benchmarks.aeron.connection.timeout=${connectionTimeout} \
+    -Dio.aeron.benchmarks.output.directory=${output_dir} \
+    -Dio.aeron.benchmarks.aeron.destination.channel=${!destination_channel_var} \
+    -Dio.aeron.benchmarks.aeron.source.channel=${!source_channel_var} \
+    -Dio.aeron.benchmarks.aeron.receiver.index=${node_id} \
     ${!extra_properties_var:-}\" PROCESS_FILE_NAME=\"echo-node-${node_id}\" \
     && numactl --membind=${!cpu_node_var} --cpunodebind=${!cpu_node_var} --physcpubind=\"${!non_isolated_cpu_cores_var}\" ${!benchmarks_path_var}/scripts/aeron/echo-server & \
     $(await_java_process_start "${server_class_name}") \
@@ -318,8 +318,8 @@ do
     media_driver="${media_driver//driver_aeron_dpdk_gateway_ipv4_address_var/${AERON_DPDK_GATEWAY_IPV4_ADDRESS}}"
     media_driver="${media_driver//driver_aeron_dpdk_local_ipv4_address_var/${AERON_DPDK_LOCAL_IPV4_ADDRESS}}"
 
-    client_class_name="io.aeron.benchmarks.remote.LoadTestRig"
-    server_class_name="io.aeron.benchmarks.aeron.remote.EchoNode"
+    client_class_name="io.aeron.benchmarks.LoadTestRig"
+    server_class_name="io.aeron.benchmarks.aeron.EchoNode"
 
     for rateIndex in "${!messageRates[@]}"
     do
@@ -335,20 +335,20 @@ do
           output_dir="${output_dir_prefix}/${test}_length=${messageLength}_rate=${messageRate}/run-${run}"
 
           benchmark_command="export JVM_OPTS=\"\
-          -Dio.aeron.benchmarks.aeron.remote.connection.timeout=${connectionTimeout}\
-          -Dio.aeron.benchmarks.remote.warmup.iterations=${warmupIterations}\
-          -Dio.aeron.benchmarks.remote.warmup.message.rate=${warmupMessageRate}\
-          -Dio.aeron.benchmarks.remote.iterations=${iterations}\
-          -Dio.aeron.benchmarks.remote.message.rate=${messageRate# }\
-          -Dio.aeron.benchmarks.remote.batch.size=${burstSize# }\
-          -Dio.aeron.benchmarks.remote.message.length=${messageLength# }\
-          -Dio.aeron.benchmarks.remote.output.file=${test}\
-          -Dio.aeron.benchmarks.remote.output.time.unit=${OUTPUT_TIME_UNIT:-MICROSECONDS}\
-          -Dio.aeron.benchmarks.remote.track.history=${TRACK_HISTORY:-false}\
-          -Dio.aeron.benchmarks.remote.report.progress=${REPORT_PROGRESS:-false}\
-          -Dio.aeron.benchmarks.remote.output.directory=${BENCHMARKS_PATH}/${output_dir}\
-          -Dio.aeron.benchmarks.aeron.remote.destination.channel=${DESTINATION_CHANNEL}\
-          -Dio.aeron.benchmarks.aeron.remote.source.channel=${SOURCE_CHANNEL}\"\
+          -Dio.aeron.benchmarks.aeron.connection.timeout=${connectionTimeout}\
+          -Dio.aeron.benchmarks.warmup.iterations=${warmupIterations}\
+          -Dio.aeron.benchmarks.warmup.message.rate=${warmupMessageRate}\
+          -Dio.aeron.benchmarks.iterations=${iterations}\
+          -Dio.aeron.benchmarks.message.rate=${messageRate# }\
+          -Dio.aeron.benchmarks.batch.size=${burstSize# }\
+          -Dio.aeron.benchmarks.message.length=${messageLength# }\
+          -Dio.aeron.benchmarks.output.file=${test}\
+          -Dio.aeron.benchmarks.output.time.unit=${OUTPUT_TIME_UNIT:-MICROSECONDS}\
+          -Dio.aeron.benchmarks.track.history=${TRACK_HISTORY:-false}\
+          -Dio.aeron.benchmarks.report.progress=${REPORT_PROGRESS:-false}\
+          -Dio.aeron.benchmarks.output.directory=${BENCHMARKS_PATH}/${output_dir}\
+          -Dio.aeron.benchmarks.aeron.destination.channel=${DESTINATION_CHANNEL}\
+          -Dio.aeron.benchmarks.aeron.source.channel=${SOURCE_CHANNEL}\"\
           && export JAVA_HOME=\"${JAVA_HOME}\"\
           ; $(kill_java_process "${client_class_name}")\
           ; $(kill_java_process "${server_class_name}")\

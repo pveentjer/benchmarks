@@ -17,8 +17,8 @@ package org.other.benchmark.impl;
 
 import org.HdrHistogram.ValueRecorder;
 import org.agrona.concurrent.NanoClock;
-import io.aeron.benchmarks.remote.Configuration;
-import io.aeron.benchmarks.remote.MessageTransceiver;
+import io.aeron.benchmarks.Configuration;
+import io.aeron.benchmarks.MessageTransceiver;
 
 public class MessageTransceiverFromAnotherPackage extends MessageTransceiver
 {

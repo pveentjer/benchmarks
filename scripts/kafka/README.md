@@ -5,7 +5,7 @@ This directory provides scripts to benchmark Kafka using the `remote.io.aeron.be
 
 All benchmarks require two nodes: "client" and "server", where "client" is the
 `remote.io.aeron.benchmarks.LoadTestRig` that uses one of the
-`io.aeron.benchmarks.remote.message.transceiver` implementations under the hood, and the "server" is the
+`io.aeron.benchmarks.message.transceiver` implementations under the hood, and the "server" is the
 remote node that pipes messages through.
 
 NOTE: It is advised to have "client" and "server" run on different machines.
@@ -35,12 +35,12 @@ To stop Kafka use the `stop-all` script.
 
 Configuration
 -------------
-* `io.aeron.benchmarks.kafka.remote.partition` - partition selection for the client (i.e. 
+* `io.aeron.benchmarks.kafka.partition` - partition selection for the client (i.e. 
 `remote.kafka.io.aeron.benchmarks.PartitionSelection`). One of the following:
   * `EXPLICIT` - an explicit partition will be assigned. Default if no other strategy is specified.
   * `BY_KEY` - a partition should be selected using a key from the record.
   * `RANDOM` - a partition should be selected at random by the broker when message arrives.
-* `io.aeron.benchmarks.kafka.remote.producer.max.in.flight.messages` - max number of the in-flight messages
+* `io.aeron.benchmarks.kafka.producer.max.in.flight.messages` - max number of the in-flight messages
 that can be sent by the producer. Default value is `1000`. When this limit is reached the producer will stop sending
 new messages until the callback is invoked.
 * `bootstrap.servers` - Kafka server location, i.e. host/port pair, e.g. `localhost:13592`.
@@ -82,7 +82,7 @@ There are three ways to define and/or override properties:
 1. Set system properties via `JVM_OPTS` environment variable, e.g.:
 
     ```
-    export JVM_OPTS="${JVM_OPTS} -Dio.aeron.benchmarks.kafka.remote.producer.max.in.flight.messages=500"
+    export JVM_OPTS="${JVM_OPTS} -Dio.aeron.benchmarks.kafka.producer.max.in.flight.messages=500"
     
     ./client
     ```

@@ -5,7 +5,7 @@ This directory provides scripts to benchmark Aeron using the `remote.io.aeron.be
 
 All benchmarks require two nodes: "client" and "server", where "client" is the
 `remote.io.aeron.benchmarks.LoadTestRig` that uses one of the
-`io.aeron.benchmarks.remote.message.transceiver`implementations under the hood, and the "server" is the
+`io.aeron.benchmarks.message.transceiver`implementations under the hood, and the "server" is the
 remote node that pipes messages through.
 
 NOTE: It is advised to have "client" and "server" run on different machines.
@@ -112,10 +112,10 @@ There are three ways to define and/or override properties:
 
 1. Create a file named `benchmark.properties` and define your properties there.
     
-    The example below illustrates setting property `io.aeron.benchmarks.remote.message.rate` to `1000000`:
+    The example below illustrates setting property `io.aeron.benchmarks.message.rate` to `1000000`:
     
     ```
-    io.aeron.benchmarks.remote.message.rate=1000000
+    io.aeron.benchmarks.message.rate=1000000
     ```
 
 1. Supply custom properties file(s) as the last argument to a script, e.g.:
@@ -127,7 +127,7 @@ There are three ways to define and/or override properties:
 1. Set system properties via `JVM_OPTS` environment variable, e.g.:
     
     ```
-    export JVM_OPTS="${JVM_OPTS} -Dio.aeron.benchmarks.aeron.remote.fragmentLimit=25"
+    export JVM_OPTS="${JVM_OPTS} -Dio.aeron.benchmarks.aeron.fragmentLimit=25"
     
     ./live-replay-client
     ```

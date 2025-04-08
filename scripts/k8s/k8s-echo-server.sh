@@ -15,7 +15,7 @@ echo "** Starting with base cpu core ${CGROUP_CPUSETS[1]}"
 taskset -c "${CGROUP_CPUSETS[1]}" "${DIR}/../aeron/echo-server" &
 
 # Wait for Java process to be up
-f_wait_for_process 'io.aeron.benchmarks.aeron.remote.EchoNode'
+f_wait_for_process 'io.aeron.benchmarks.aeron.EchoNode'
 
 # Sets the affinities main echo thread
 f_pin_thread "echo-0" "${CGROUP_CPUSETS[2]}"

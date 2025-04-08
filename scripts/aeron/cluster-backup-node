@@ -23,7 +23,7 @@ PROCESS_FILE_NAME="${PROCESS_FILE_NAME:-$(basename "${0}" .sh)}"
 export PROCESS_FILE_NAME
 
 exec "${DIR}/../run-java" \
-  io.aeron.benchmarks.aeron.remote.ClusterBackupNode \
+  io.aeron.benchmarks.aeron.ClusterBackupNode \
   "${DIR}/low-latency-driver.properties" \
   "${DIR}/low-latency-archive.properties" \
   "${DIR}/benchmark.properties" \

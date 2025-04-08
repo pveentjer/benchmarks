@@ -189,14 +189,14 @@ Here is an example of running the Aeron echo benchmark using the embedded Java M
 server (`192.168.0.20`) and client (`192.168.0.10`).
 ```bash
 server:~/benchmarks/scripts$ JVM_OPTS="\
--Dio.aeron.benchmarks.aeron.remote.embedded.media.driver=true \
--Dio.aeron.benchmarks.aeron.remote.source.channel=aeron:udp?endpoint=192.168.0.10:13000 \
--Dio.aeron.benchmarks.aeron.remote.destination.channel=aeron:udp?endpoint=192.168.0.20:13001" aeron/echo-server
+-Dio.aeron.benchmarks.aeron.embedded.media.driver=true \
+-Dio.aeron.benchmarks.aeron.source.channel=aeron:udp?endpoint=192.168.0.10:13000 \
+-Dio.aeron.benchmarks.aeron.destination.channel=aeron:udp?endpoint=192.168.0.20:13001" aeron/echo-server
 
 client:~/benchmarks/scripts$ JVM_OPTS="\
--Dio.aeron.benchmarks.aeron.remote.embedded.media.driver=true \
--Dio.aeron.benchmarks.aeron.remote.source.channel=aeron:udp?endpoint=192.168.0.10:13000 \
--Dio.aeron.benchmarks.aeron.remote.destination.channel=aeron:udp?endpoint=192.168.0.20:13001" \
+-Dio.aeron.benchmarks.aeron.embedded.media.driver=true \
+-Dio.aeron.benchmarks.aeron.source.channel=aeron:udp?endpoint=192.168.0.10:13000 \
+-Dio.aeron.benchmarks.aeron.destination.channel=aeron:udp?endpoint=192.168.0.20:13001" \
 ./benchmark-runner --output-file "aeron-echo-test" --messages "100K" --message-length "288" --iterations 60 "aeron/echo-client"
 ```
 _**Note**: At the end of a single run the server-side process (e.g. `aeron/echo-server`) will exit, i.e. in order to do

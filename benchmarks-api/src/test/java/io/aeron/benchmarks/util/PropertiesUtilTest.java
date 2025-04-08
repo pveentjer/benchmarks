@@ -15,6 +15,7 @@
  */
 package io.aeron.benchmarks.util;
 
+import io.aeron.benchmarks.PropertiesUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

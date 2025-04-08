@@ -288,8 +288,8 @@ do
     server_driver="${server_driver//driver_aeron_dpdk_gateway_ipv4_address_var/${SERVER_AERON_DPDK_GATEWAY_IPV4_ADDRESS}}"
     server_driver="${server_driver//driver_aeron_dpdk_local_ipv4_address_var/${SERVER_AERON_DPDK_LOCAL_IPV4_ADDRESS}}"
 
-    client_class_name="io.aeron.benchmarks.remote.LoadTestRig"
-    server_class_name="io.aeron.benchmarks.aeron.remote.EchoNode"
+    client_class_name="io.aeron.benchmarks.LoadTestRig"
+    server_class_name="io.aeron.benchmarks.aeron.EchoNode"
 
     start_client="\
     export JAVA_HOME=\"${CLIENT_JAVA_HOME}\" PROCESS_FILE_NAME=\"echo-client-media-driver\" \
@@ -317,12 +317,12 @@ do
       "${stop_server}" \
       "${CLIENT_BENCHMARKS_PATH}/${output_dir}/${client_md}-vs-${server_md}_${context}_mtu=${mtu}" \
       "${SERVER_BENCHMARKS_PATH}/${output_dir}/${client_md}-vs-${server_md}_${context}_mtu=${mtu}" \
-      "-Dio.aeron.benchmarks.remote.output.file=${test} \
-      -Dio.aeron.benchmarks.remote.output.time.unit=${OUTPUT_TIME_UNIT:-MICROSECONDS} \
-      -Dio.aeron.benchmarks.aeron.remote.destination.channel=${CLIENT_DESTINATION_CHANNEL} \
-      -Dio.aeron.benchmarks.aeron.remote.source.channel=${CLIENT_SOURCE_CHANNEL}" \
-      "-Dio.aeron.benchmarks.aeron.remote.destination.channel=${SERVER_DESTINATION_CHANNEL} \
-      -Dio.aeron.benchmarks.aeron.remote.source.channel=${SERVER_SOURCE_CHANNEL}"
+      "-Dio.aeron.benchmarks.output.file=${test} \
+      -Dio.aeron.benchmarks.output.time.unit=${OUTPUT_TIME_UNIT:-MICROSECONDS} \
+      -Dio.aeron.benchmarks.aeron.destination.channel=${CLIENT_DESTINATION_CHANNEL} \
+      -Dio.aeron.benchmarks.aeron.source.channel=${CLIENT_SOURCE_CHANNEL}" \
+      "-Dio.aeron.benchmarks.aeron.destination.channel=${SERVER_DESTINATION_CHANNEL} \
+      -Dio.aeron.benchmarks.aeron.source.channel=${SERVER_SOURCE_CHANNEL}"
   done
 done
 

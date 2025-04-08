@@ -20,11 +20,11 @@ set -euxo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 export JVM_OPTS="${JVM_OPTS:-} \
--Dio.aeron.benchmarks.remote.message.transceiver=io.aeron.benchmarks.kafka.remote.KafkaMessageTransceiver \
+-Dio.aeron.benchmarks.message.transceiver=io.aeron.benchmarks.kafka.KafkaMessageTransceiver \
 -Dlog4j.configuration=file:${DIR}/log4j.properties"
 
 exec "${DIR}/../run-java" \
-  io.aeron.benchmarks.remote.LoadTestRig \
+  io.aeron.benchmarks.LoadTestRig \
   "${DIR}/client.properties" \
   "${DIR}/benchmark.properties" \
   "$@"
