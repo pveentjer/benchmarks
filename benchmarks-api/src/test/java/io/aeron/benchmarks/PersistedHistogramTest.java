@@ -31,11 +31,12 @@ import java.util.Random;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
-import static io.aeron.benchmarks.PersistedHistogram.*;
+import static io.aeron.benchmarks.PersistedHistogram.AGGREGATE_FILE_SUFFIX;
+import static io.aeron.benchmarks.PersistedHistogram.FAILED_FILE_SUFFIX;
 import static io.aeron.benchmarks.PersistedHistogram.Status.FAIL;
 import static io.aeron.benchmarks.PersistedHistogram.Status.OK;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 class PersistedHistogramTest
 {
@@ -126,7 +127,7 @@ class PersistedHistogramTest
         assertNotNull(file);
         assertTrue(Files.exists(file));
         assertEquals(
-            "test-histogram" + INDEX_SEPARATOR + "0.hdr" + FAILED_FILE_SUFFIX,
+            "test-histogram.hdr" + FAILED_FILE_SUFFIX,
             file.getFileName().toString());
         final Histogram savedHistogram = readHistogram(file);
         assertEquals(expectedHistogram, savedHistogram);
@@ -156,7 +157,7 @@ class PersistedHistogramTest
 
         assertNotNull(file);
         assertTrue(Files.exists(file));
-        assertEquals("another_one-14.hdr", file.getFileName().toString());
+        assertEquals("another_one.hdr", file.getFileName().toString());
 
         final Histogram savedHistogram = readHistogram(file);
         assertEquals(expectedHistogram, savedHistogram);
@@ -205,7 +206,7 @@ class PersistedHistogramTest
 
         assertNotNull(file);
         assertTrue(Files.exists(file));
-        assertEquals("another_one-0.hdr.FAIL", file.getFileName().toString());
+        assertEquals("another_one.hdr.FAIL", file.getFileName().toString());
 
         final Histogram savedHistogram = readHistogram(file);
         assertEquals(expectedHistogram.getTotalCount(), savedHistogram.getTotalCount());

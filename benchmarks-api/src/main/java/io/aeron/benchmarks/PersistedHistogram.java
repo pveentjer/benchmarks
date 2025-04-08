@@ -23,13 +23,11 @@ import org.HdrHistogram.ValueRecorder;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
-import static java.nio.file.Files.find;
-import static java.nio.file.Files.isRegularFile;
 import static java.util.concurrent.TimeUnit.HOURS;
-import static org.agrona.AsciiEncoding.parseIntAscii;
 
 public interface PersistedHistogram extends AutoCloseable
 {
@@ -57,11 +55,6 @@ public interface PersistedHistogram extends AutoCloseable
      * File name suffix for failed benchmark results.
      */
     String FAILED_FILE_SUFFIX = ".FAIL";
-
-    /**
-     * Separator character used to separate file name from the index.
-     */
-    char INDEX_SEPARATOR = '-';
 
     enum Status
     {
@@ -123,17 +116,12 @@ public interface PersistedHistogram extends AutoCloseable
         final Histogram histogram, final Path outputDirectory, final String prefix, final Status status)
         throws IOException
     {
-        final String fileNamePrefix = prefix + INDEX_SEPARATOR;
-        final String fileExtension = FILE_EXTENSION;
-
-        final int index = determineFileIndex(outputDirectory, fileNamePrefix, fileExtension);
-        return saveToFile(histogram, outputDirectory.resolve(fileName(status, fileNamePrefix, fileExtension, index)));
+        return saveToFile(histogram, outputDirectory.resolve(fileName(status, prefix, FILE_EXTENSION)));
     }
 
-    static String fileName(
-        final Status status, final String fileNamePrefix, final String fileExtension, final int index)
+    static String fileName(final Status status, final String fileNamePrefix, final String fileExtension)
     {
-        final String name = fileNamePrefix + index + fileExtension;
+        final String name = fileNamePrefix + fileExtension;
         if (Status.FAIL == status)
         {
             return name + FAILED_FILE_SUFFIX;
@@ -145,13 +133,9 @@ public interface PersistedHistogram extends AutoCloseable
         final Path outputDirectory, final String prefix, final Status status, final double... percentiles)
         throws IOException
     {
-        final String fileNamePrefix = prefix + INDEX_SEPARATOR;
-        final String fileExtension = HISTORY_FILE_EXTENSION;
+        final Path csvPath = outputDirectory.resolve(fileName(status, prefix, HISTORY_FILE_EXTENSION));
 
-        final int index = determineFileIndex(outputDirectory, fileNamePrefix, fileExtension);
-        final Path csvPath = outputDirectory.resolve(fileName(status, fileNamePrefix, fileExtension, index));
-
-        try (PrintStream output = new PrintStream(csvPath.toFile(), "ASCII"))
+        try (PrintStream output = new PrintStream(csvPath.toFile(), StandardCharsets.US_ASCII))
         {
             output.print("timestamp (ms)");
             for (final double percentile : percentiles)
@@ -180,42 +164,6 @@ public interface PersistedHistogram extends AutoCloseable
         }
 
         return csvPath;
-    }
-
-    static int determineFileIndex(
-        final Path outputDirectory,
-        final String fileNamePrefix,
-        final String fileExtension) throws IOException
-    {
-        try (
-            Stream<Path> pathStream = find(
-                outputDirectory,
-                1,
-                (file, attrs) ->
-                {
-                    if (!isRegularFile(file))
-                    {
-                        return false;
-                    }
-
-                    final String fileName = file.getFileName().toString();
-                    return isHdrFile(fileName, fileExtension) &&
-                        fileName.startsWith(fileNamePrefix);
-                }))
-        {
-            return pathStream.mapToInt(
-                (file) ->
-                {
-                    final String fileName = file.getFileName().toString();
-                    final int failedSuffix = fileName.lastIndexOf(FAILED_FILE_SUFFIX);
-                    final int lengthWithoutSuffix = failedSuffix > 0 ? failedSuffix : fileName.length();
-                    final int indexStart = fileName.lastIndexOf(INDEX_SEPARATOR, lengthWithoutSuffix - 1) + 1;
-                    return parseIntAscii(
-                        fileName, indexStart, lengthWithoutSuffix - fileExtension.length() - indexStart);
-                })
-            .max()
-            .orElse(-1) + 1;
-        }
     }
 
     static boolean isHdrFile(final String fileName, final String fileExtension)

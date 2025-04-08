@@ -134,7 +134,7 @@ export SSH_SERVER_NODE=<IP of the server machine>
 
 # Set of required configuration options
 export CLIENT_BENCHMARKS_PATH=<directory containing the unpacked benchmarks.tar>
-export CLIENT_JAVA_HOME=<path to JAVA_HOME (JDK 8+)>
+export CLIENT_JAVA_HOME=<path to JAVA_HOME (JDK 17+)>
 export CLIENT_DRIVER_CONDUCTOR_CPU_CORE=<CPU core to pin the 'conductor' thread>
 export CLIENT_DRIVER_SENDER_CPU_CORE=<CPU core to pin the 'sender' thread>
 export CLIENT_DRIVER_RECEIVER_CPU_CORE=<CPU core to pin the 'receiver' thread>
@@ -146,7 +146,7 @@ export CLIENT_AERON_DPDK_LOCAL_IPV4_ADDRESS=
 export CLIENT_SOURCE_CHANNEL="aeron:udp?endpoint=<SOURCE_IP>:13100|interface=<SOURCE_IP>/24"
 export CLIENT_DESTINATION_CHANNEL="aeron:udp?endpoint=<DESTINATION_IP>:13000|interface=<DESTINATION_IP>/24"
 export SERVER_BENCHMARKS_PATH=<directory containing the unpacked benchmarks.tar>
-export SERVER_JAVA_HOME=<path to JAVA_HOME (JDK 8+)>
+export SERVER_JAVA_HOME=<path to JAVA_HOME (JDK 17+)>
 export SERVER_DRIVER_CONDUCTOR_CPU_CORE=<CPU core to pin the 'conductor' thread>
 export SERVER_DRIVER_SENDER_CPU_CORE=<CPU core to pin the 'sender' thread>
 export SERVER_DRIVER_RECEIVER_CPU_CORE=<CPU core to pin the 'receiver' thread>
@@ -210,11 +210,11 @@ To aggregate the results of the multiple runs into a single file use the `aggreg
 For example if the ``results`` directory contains the following files:
 ```bash
 results
-├── echo-test_rate=1000_batch=1_length=32_sha=c7a083c84b45f77fdee5cedc272d898d44b6e18deaf963b3e2b2c074006b0b10-0.hdr
-├── echo-test_rate=1000_batch=1_length=32_sha=c7a083c84b45f77fdee5cedc272d898d44b6e18deaf963b3e2b2c074006b0b10-1.hdr
-├── echo-test_rate=1000_batch=1_length=32_sha=c7a083c84b45f77fdee5cedc272d898d44b6e18deaf963b3e2b2c074006b0b10-2.hdr
-├── echo-test_rate=1000_batch=1_length=32_sha=c7a083c84b45f77fdee5cedc272d898d44b6e18deaf963b3e2b2c074006b0b10-3.hdr
-└── echo-test_rate=1000_batch=1_length=32_sha=c7a083c84b45f77fdee5cedc272d898d44b6e18deaf963b3e2b2c074006b0b10-4.hdr
+├── echo-test_rate=1000_batch=1_length=32-0.hdr
+├── echo-test_rate=1000_batch=1_length=32-1.hdr
+├── echo-test_rate=1000_batch=1_length=32-2.hdr
+├── echo-test_rate=1000_batch=1_length=32-3.hdr
+└── echo-test_rate=1000_batch=1_length=32-4.hdr
 ```   
 
 Running:
@@ -225,17 +225,16 @@ Running:
 Will produce the following result:
 ```bash
 results
-├── echo-test_rate=1000_batch=1_length=32_sha=c7a083c84b45f77fdee5cedc272d898d44b6e18deaf963b3e2b2c074006b0b10-0.hdr
-├── echo-test_rate=1000_batch=1_length=32_sha=c7a083c84b45f77fdee5cedc272d898d44b6e18deaf963b3e2b2c074006b0b10-1.hdr
-├── echo-test_rate=1000_batch=1_length=32_sha=c7a083c84b45f77fdee5cedc272d898d44b6e18deaf963b3e2b2c074006b0b10-2.hdr
-├── echo-test_rate=1000_batch=1_length=32_sha=c7a083c84b45f77fdee5cedc272d898d44b6e18deaf963b3e2b2c074006b0b10-3.hdr
-├── echo-test_rate=1000_batch=1_length=32_sha=c7a083c84b45f77fdee5cedc272d898d44b6e18deaf963b3e2b2c074006b0b10-4.hdr
-├── echo-test_rate=1000_batch=1_length=32_sha=c7a083c84b45f77fdee5cedc272d898d44b6e18deaf963b3e2b2c074006b0b10-combined.hdr
-└── echo-test_rate=1000_batch=1_length=32_sha=c7a083c84b45f77fdee5cedc272d898d44b6e18deaf963b3e2b2c074006b0b10-report.hgrm
+├── echo-test_rate=1000_batch=1_length=32-0.hdr
+├── echo-test_rate=1000_batch=1_length=32-1.hdr
+├── echo-test_rate=1000_batch=1_length=32-2.hdr
+├── echo-test_rate=1000_batch=1_length=32-3.hdr
+├── echo-test_rate=1000_batch=1_length=32-4.hdr
+├── echo-test_rate=1000_batch=1_length=32-combined.hdr
+└── echo-test_rate=1000_batch=1_length=32-report.hgrm
 ```
-where `echo-test_rate=1000_batch=1_length=32_sha=c7a083c84b45f77fdee5cedc272d898d44b6e18deaf963b3e2b2c074006b0b10-combined.hdr` is the
-aggregated histogram of five runs and the 
-`echo-test_rate=1000_batch=1_length=32_c7a083c84b45f77fdee5cedc272d898d44b6e18deaf963b3e2b2c074006b0b10-report.hgrm` is an export of the
+where `echo-test_rate=1000_batch=1_length=32-combined.hdr` is the
+aggregated histogram of five runs and the `echo-test_rate=1000_batch=1_length=32-report.hgrm` is an export of the
 aggregated histogram that can be plotted using http://hdrhistogram.github.io/HdrHistogram/plotFiles.html.
 
 ### Plotting the results

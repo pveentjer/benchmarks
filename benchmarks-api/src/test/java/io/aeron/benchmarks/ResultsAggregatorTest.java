@@ -105,10 +105,10 @@ class ResultsAggregatorTest
     @Test
     void multipleHistogramFiles() throws IOException
     {
-        saveToDisc("my-5.hdr", createHistogram(10, 25, 100, 555, 777, 999));
-        saveToDisc("my-0.hdr.FAIL", createHistogram(2, 4, 555555, 1232343));
+        saveToDisc("my.hdr", createHistogram(10, 25, 100, 555, 777, 999));
+        saveToDisc("my.hdr.FAIL", createHistogram(2, 4, 555555, 1232343));
         saveToDisc("my-combined.hdr.FAIL", createHistogram(3, 4, 11, 1, 1, 22));
-        saveToDisc("other-78.hdr", createHistogram(1, 45, 200));
+        saveToDisc("other.hdr", createHistogram(1, 45, 200));
         write(tempDir.resolve("other-report.hgrm"), new byte[]{ 0, -128, 127 }, CREATE_NEW);
         saveToDisc("hidden-4.ccc", createHistogram(0, 0, 1, 2, 3, 4, 5, 6));
         saveToDisc("hidden-6.ccc", createHistogram(0, 0, 6, 6, 0));

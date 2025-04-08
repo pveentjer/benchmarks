@@ -77,8 +77,17 @@ public final class ResultsAggregator
                 })
                 .collect(groupingBy((file) ->
                 {
-                    final String fileName = file.getFileName().toString();
-                    return fileName.substring(0, fileName.lastIndexOf(INDEX_SEPARATOR));
+                    String fileName = file.getFileName().toString();
+                    if (fileName.endsWith(FAILED_FILE_SUFFIX))
+                    {
+                        fileName = fileName.substring(0, fileName.length() - FAILED_FILE_SUFFIX.length());
+                    }
+                    fileName = fileName.substring(0, fileName.length() - FILE_EXTENSION.length());
+                    if (fileName.endsWith(AGGREGATE_FILE_SUFFIX))
+                    {
+                        fileName = fileName.substring(0, fileName.length() - AGGREGATE_FILE_SUFFIX.length());
+                    }
+                    return fileName;
                 }));
 
             for (final Entry<String, List<Path>> e : byPrefix.entrySet())
