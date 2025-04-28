@@ -72,6 +72,8 @@ subprojects {
     apply plugin: 'java-library'
     apply plugin: 'checkstyle'
 
+    checkstyle.toolVersion = libs.versions.checkstyle.get()
+
     dependencies {
         testImplementation platform("org.junit:junit-bom:${libs.versions.junit.get()}")
         testImplementation "org.junit.jupiter:junit-jupiter-params"
@@ -87,8 +89,6 @@ subprojects {
         }
         sourceCompatibility = JavaVersion.VERSION_17
     }
-
-    checkstyle.toolVersion = libs.versions.checkstyle.get()
 
     tasks.withType(Jar).configureEach {
         enabled = true
