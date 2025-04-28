@@ -80,7 +80,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ '12' ]
+        version: [ '15' ]
     env:
       CC: gcc-${{ matrix.version }}
       CXX: g++-${{ matrix.version }}
@@ -126,7 +126,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ '15' ]
+        version: [ '20' ]
     env:
       CC: clang-${{ matrix.version }}
       CXX: clang++-${{ matrix.version }}
