@@ -300,6 +300,5 @@ tasks.register('tarTestLogs', Tar) {
 }
 
 wrapper {
-    gradleVersion = libs.versions.gradle.get()
     distributionType = 'ALL'
 }
