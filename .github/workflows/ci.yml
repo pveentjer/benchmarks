@@ -80,7 +80,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ '15' ]
+        version: [ '14' ]
     env:
       CC: gcc-${{ matrix.version }}
       CXX: g++-${{ matrix.version }}
@@ -104,7 +104,7 @@ jobs:
       - name: Install compiler
         run: |
           sudo apt-get update || true
-          sudo apt-get install -y g++-${{ matrix.version }} libbsd-dev uuid-dev cmake
+          sudo apt-get install -y g++-${{ matrix.version }} libbsd-dev uuid-dev
       - name: Build
         run: cppbuild/cppbuild
       - name: Copy test logs
@@ -152,7 +152,7 @@ jobs:
           curl -L https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
           sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-${{ matrix.version }} main"
           sudo apt-get update || true
-          sudo apt-get install -y clang-${{ matrix.version }} libbsd-dev uuid-dev cmake
+          sudo apt-get install -y clang-${{ matrix.version }} libbsd-dev uuid-dev
       - name: Build
         run: cppbuild/cppbuild
       - name: Upload crash logs
