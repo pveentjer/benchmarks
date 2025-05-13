@@ -15,7 +15,7 @@ Test scenarios
 
 1. Echo benchmark using streaming client.
 
-    Start the scripts in the following order: `server` -> `streaming-client`.
+    Start the scripts in the following order: `server` -> `client`.
 
 
 Configuration
