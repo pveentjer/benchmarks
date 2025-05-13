@@ -63,6 +63,7 @@ fi
 context=""
 tls_options=("false" "true")
 onload="onload --profile=latency"
+download_dir="${DIR}/.."
 
 while [[ $# -gt 0 ]]
 do
@@ -85,8 +86,13 @@ do
     shift
     shift
     ;;
+  --download-dir)
+    download_dir="${2}"
+    shift
+    shift
+    ;;
   -h|--help)
-    echo "${0} [--context \"\$context\"] [--no-tls] [--no-onload] [--onload \"\$onload_command\"]"
+    echo "${0} [--context \"\$context\"] [--no-tls] [--no-onload] [--onload \"\$onload_command\"] [--download-dir \"\$download_dir\"]"
     exit
     ;;
   *)
@@ -154,5 +160,5 @@ done
 
 collect_environment_info "${SSH_CLIENT_USER}" "${SSH_CLIENT_KEY_FILE}" "${SSH_CLIENT_NODE}" "${CLIENT_BENCHMARKS_PATH}/scripts" "${CLIENT_BENCHMARKS_PATH}/${output_dir}" "${CLIENT_JAVA_HOME}"
 collect_environment_info "${SSH_SERVER_USER}" "${SSH_SERVER_KEY_FILE}" "${SSH_SERVER_NODE}" "${SERVER_BENCHMARKS_PATH}/scripts" "${SERVER_BENCHMARKS_PATH}/${output_dir}" "${SERVER_JAVA_HOME}"
-download_results "${SSH_CLIENT_USER}" "${SSH_CLIENT_KEY_FILE}" "${SSH_CLIENT_NODE}" "${CLIENT_BENCHMARKS_PATH}/${output_dir}" "${DIR}/.." "${test_dir}-client"
-download_results "${SSH_SERVER_USER}" "${SSH_SERVER_KEY_FILE}" "${SSH_SERVER_NODE}" "${SERVER_BENCHMARKS_PATH}/${output_dir}" "${DIR}/.." "${test_dir}-server"
+download_results "${SSH_CLIENT_USER}" "${SSH_CLIENT_KEY_FILE}" "${SSH_CLIENT_NODE}" "${CLIENT_BENCHMARKS_PATH}/${output_dir}" "${download_dir}" "${test_dir}-client"
+download_results "${SSH_SERVER_USER}" "${SSH_SERVER_KEY_FILE}" "${SSH_SERVER_NODE}" "${SERVER_BENCHMARKS_PATH}/${output_dir}" "${download_dir}" "${test_dir}-server"

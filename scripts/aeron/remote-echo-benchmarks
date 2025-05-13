@@ -134,7 +134,7 @@ do
   -h|--help)
     echo "${0} --client-drivers \"client-media-drivers-list-csv\" --server-drivers \"server-media-drivers-list-csv\" \
     [--context \"\$context\"] [--onload \"\$onload_command\"] [--mtu \"\$mtu-csv\"] \
-    [--download-dir \"$download_dir\"]
+    [--download-dir \"\$download_dir\"]
           the support media drivers are: ${!drivers[*]}"
     exit
     ;;
