@@ -33,6 +33,8 @@ OUTPUT_PATH=${1:-.}
 JDK_HOME=${2:-$JAVA_HOME}
 FILE_NAME="env-summary-$(hostname)"
 
+mkdir -p "${OUTPUT_PATH}"
+
 MANUFACTURER=$(cat /sys/class/dmi/id/chassis_vendor)
 PRODUCT_NAME=$(cat /sys/class/dmi/id/product_name)
 MACHINE_TYPE=$(vserver=$(lscpu | grep -c Hypervisor); if [ "$vserver" -gt 0 ]; then echo "VM"; else echo "Physical"; fi)
