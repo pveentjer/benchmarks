@@ -1,7 +1,7 @@
 [versions]
 agrona = "2.1.0"
 aeron = "1.47.5"
-checkstyle = "10.23.1"
+checkstyle = "10.24.0"
 disruptor = "4.0.0"
 errorprone = "2.30.0"
 grpc = "1.72.0"
