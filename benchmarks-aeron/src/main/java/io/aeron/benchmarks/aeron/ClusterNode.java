@@ -16,6 +16,7 @@
 package io.aeron.benchmarks.aeron;
 
 import io.aeron.archive.Archive;
+import io.aeron.benchmarks.Configuration;
 import io.aeron.cluster.ConsensusModule;
 import io.aeron.cluster.service.Cluster;
 import io.aeron.cluster.service.ClusterMarkFile;
@@ -27,7 +28,6 @@ import org.agrona.concurrent.EpochClock;
 import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.ShutdownSignalBarrier;
 import org.agrona.concurrent.SystemEpochClock;
-import io.aeron.benchmarks.Configuration;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -36,15 +36,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import static io.aeron.cluster.codecs.mark.ClusterComponentType.CONSENSUS_MODULE;
-import static io.aeron.cluster.codecs.mark.ClusterComponentType.CONTAINER;
-import static io.aeron.cluster.service.ClusteredServiceContainer.Configuration.LIVENESS_TIMEOUT_MS;
+import static io.aeron.benchmarks.PropertiesUtil.loadPropertiesFiles;
+import static io.aeron.benchmarks.PropertiesUtil.mergeWithSystemProperties;
+import static io.aeron.benchmarks.aeron.AeronUtil.CLUSTER_SERVICE_PROP_NAME;
+import static io.aeron.benchmarks.aeron.AeronUtil.DEFAULT_SNAPSHOT_SIZE;
+import static io.aeron.benchmarks.aeron.AeronUtil.FAILOVER_CONTROL_SERVER_HOSTNAME_PROP_NAME;
+import static io.aeron.benchmarks.aeron.AeronUtil.FAILOVER_CONTROL_SERVER_PORT_PROP_NAME;
+import static io.aeron.benchmarks.aeron.AeronUtil.SNAPSHOT_SIZE_PROP_NAME;
+import static io.aeron.benchmarks.aeron.AeronUtil.printingErrorHandler;
 import static org.agrona.PropertyAction.PRESERVE;
 import static org.agrona.PropertyAction.REPLACE;
 import static org.agrona.SystemUtil.getSizeAsLong;
-import static io.aeron.benchmarks.aeron.AeronUtil.*;
-import static io.aeron.benchmarks.PropertiesUtil.loadPropertiesFiles;
-import static io.aeron.benchmarks.PropertiesUtil.mergeWithSystemProperties;
 
 public final class ClusterNode
 {
@@ -77,14 +79,8 @@ public final class ClusterNode
                 .clusterDir(clusterDir)
                 .epochClock(epochClock)
                 .clusterMemberId(memberId)
-                .idleStrategySupplier(idleStrategySupplier);
-
-            ctx.clusterMarkFile(new ClusterMarkFile(
-                new File(aeronDirectoryName, ClusterMarkFile.FILENAME),
-                CONSENSUS_MODULE,
-                ctx.errorBufferLength(),
-                epochClock,
-                LIVENESS_TIMEOUT_MS));
+                .idleStrategySupplier(idleStrategySupplier)
+                .markFileDir(new File(aeronDirectoryName));
 
             return ConsensusModule.launch(ctx);
         });
@@ -113,14 +109,8 @@ public final class ClusterNode
                 .clusterDir(clusterDir)
                 .epochClock(epochClock)
                 .serviceId(serviceId)
-                .idleStrategySupplier(idleStrategySupplier);
-
-            ctx.clusterMarkFile(new ClusterMarkFile(
-                new File(aeronDirectoryName, ClusterMarkFile.markFilenameForService(ctx.serviceId())),
-                CONTAINER,
-                ctx.errorBufferLength(),
-                epochClock,
-                LIVENESS_TIMEOUT_MS));
+                .idleStrategySupplier(idleStrategySupplier)
+                .markFileDir(new File(aeronDirectoryName));
 
             return ClusteredServiceContainer.launch(ctx);
         });

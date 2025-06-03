@@ -319,7 +319,8 @@ class AeronUtilTest
                 SECONDS.toNanos(5),
                 512 * 1024,
                 startTimestampMs,
-                212);
+                212,
+                4096);
             metaDataBuffer.putInt(CncFileDescriptor.CNC_VERSION_FIELD_OFFSET, cncVersion);
 
             final CountersManager countersManager = new CountersManager(
