@@ -2,15 +2,21 @@
 agrona = "2.2.2"
 aeron = "1.48.1"
 checkstyle = "10.25.0"
+checker = "3.43.0"
+commons-codec = "1.15"
+commons-lang3 = "3.8.1"
+commons-io = "2.14.0"
 disruptor = "4.0.0"
 errorprone = "2.30.0"
 grpc = "1.73.0"
 hamcrest = "3.0"
 hdrHistogram = "2.2.2"
+httpcore = "4.4.14"
 jmh = "1.37"
 junit = "5.13.1"
 kafka = "3.8.1"
 mockito = "5.18.0"
+plexus = "3.3.0"
 protoc = "3.25.7"
 protobufPlugin = "0.9.5"
 scala = "2.13.14"
@@ -23,22 +29,27 @@ versions = "0.52.0"
 agrona = { group = "org.agrona", name = "agrona", version.ref = "agrona" }
 aeron-cluster = { group = "io.aeron", name = "aeron-cluster", version.ref = "aeron" }
 aeron-samples = { group = "io.aeron", name = "aeron-samples", version.ref = "aeron" }
-mockito = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
-hamcrest = { group = "org.hamcrest", name = "hamcrest", version.ref = "hamcrest" }
-hdrHistogram = { group = "org.hdrhistogram", name = "HdrHistogram", version.ref = "hdrHistogram" }
-jmh-core = { group = "org.openjdk.jmh", name = "jmh-core", version.ref = "jmh" }
-jmh-generator-annprocess = { group = "org.openjdk.jmh", name = "jmh-generator-annprocess", version.ref = "jmh" }
+checker = { group= "org.checkerframework" , name="checker-qual", version.ref = "checker" }
+commons-codec = { group = "commons-codec", name = "commons-codec", version.ref = "commons-codec" }
+commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
+commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version.ref = "commons-lang3" }
+errorprone = { group= "com.google.errorprone" , name="error_prone_annotations", version.ref = "errorprone" }
 grpc-protobuf = { group = "io.grpc", name = "grpc-protobuf", version.ref = "grpc" }
 grpc-stub = { group = "io.grpc", name = "grpc-stub", version.ref = "grpc" }
 grpc-netty-shaded = { group = "io.grpc", name = "grpc-netty-shaded", version.ref = "grpc" }
-tomcat-annotations-api = { group = "org.apache.tomcat", name = "annotations-api", version.ref = "tomcat" }
-checker = { group= "org.checkerframework" , name="checker-qual", version = "3.43.0" }
-errorprone = { group= "com.google.errorprone" , name="error_prone_annotations", version.ref = "errorprone" }
-disruptor = { group= "com.lmax" , name="disruptor", version.ref = "disruptor" }
+hamcrest = { group = "org.hamcrest", name = "hamcrest", version.ref = "hamcrest" }
+hdrHistogram = { group = "org.hdrhistogram", name = "HdrHistogram", version.ref = "hdrHistogram" }
+httpcore = { group = "org.apache.httpcomponents", name = "httpcore", version.ref = "httpcore" }
+jmh-core = { group = "org.openjdk.jmh", name = "jmh-core", version.ref = "jmh" }
+jmh-generator-annprocess = { group = "org.openjdk.jmh", name = "jmh-generator-annprocess", version.ref = "jmh" }
 kafka = { group= "org.apache.kafka" , name="kafka_2.13", version.ref = "kafka" }
 kafka-clients = { group= "org.apache.kafka" , name="kafka-clients", version.ref = "kafka" }
 kafka-server-common = { group= "org.apache.kafka" , name="kafka-server-common", version.ref = "kafka" }
 kafka-metadata = { group= "org.apache.kafka" , name="kafka-metadata", version.ref = "kafka" }
+mockito = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
+tomcat-annotations-api = { group = "org.apache.tomcat", name = "annotations-api", version.ref = "tomcat" }
+disruptor = { group= "com.lmax" , name="disruptor", version.ref = "disruptor" }
+plexus-utils = { group = "org.codehaus.plexus", name = "plexus-utils", version.ref = "plexus" }
 slf4j-api = { group= "org.slf4j" , name="slf4j-api", version.ref = "slf4j" }
 slf4j-log4j12 = { group= "org.slf4j" , name="slf4j-log4j12", version.ref = "slf4j" }
 scala-library = { group= "org.scala-lang" , name="scala-library", version.ref = "scala" }
