@@ -18,12 +18,12 @@ package io.aeron.benchmarks.kafka;
 import io.aeron.benchmarks.Configuration;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaRaftServer;
-import kafka.tools.StorageTool;
 import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.utils.Time;
+import org.apache.kafka.metadata.properties.MetaProperties;
+import org.apache.kafka.metadata.properties.MetaPropertiesVersion;
 
 import java.io.BufferedWriter;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -39,44 +39,29 @@ class KafkaEmbeddedCluster implements AutoCloseable
         logDir = tempDir.resolve("log-dir");
         Files.createDirectory(logDir);
 
-        final Uuid clusterId = Uuid.randomUuid();
-        final Properties properties = createConfig(httpPort, sslPort, controllerPort);
+        final int nodeId = 1;
+        final KafkaConfig config = createConfig(nodeId, httpPort, sslPort, controllerPort);
 
-        final Path confFile = tempDir.resolve("kafka.conf");
+        final Path confFile = logDir.resolve("meta.properties");
+        final Properties metaProperties = new MetaProperties.Builder()
+            .setClusterId(Uuid.randomUuid().toString())
+            .setVersion(MetaPropertiesVersion.V1)
+            .setNodeId(nodeId)
+            .setDirectoryId(Uuid.randomUuid())
+            .build()
+            .toProperties();
         try (BufferedWriter writer = Files.newBufferedWriter(confFile))
         {
-            properties.store(writer, null);
-        }
-
-        final Method parseArguments = StorageTool.class.getDeclaredMethod("parseArguments", String[].class);
-        parseArguments.setAccessible(true);
-        final Object args = parseArguments.invoke(null, (Object)new String[]{
-            "format",
-            "--config", confFile.toAbsolutePath().toString(),
-            "--cluster-id", clusterId.toString(),
-            "--standalone" });
-
-        final KafkaConfig config = new KafkaConfig(properties);
-        final Method[] declaredMethods = StorageTool.class.getDeclaredMethods();
-        for (final Method method : declaredMethods)
-        {
-            if ("runFormatCommand".equals(method.getName()))
-            {
-                method.setAccessible(true);
-                method.invoke(null, args, config, System.out);
-                break;
-            }
+            metaProperties.store(writer, null);
         }
 
         kafka = new KafkaRaftServer(config, Time.SYSTEM);
         kafka.startup();
     }
 
-    private Properties createConfig(final int httpPort, final int sslPort, final int controllerPort)
+    private KafkaConfig createConfig(final int nodeId, final int httpPort, final int sslPort, final int controllerPort)
     {
         final Properties props = new Properties();
-        final int nodeId = 1;
-
 
         props.put("process.roles", "broker,controller");
         props.put("controller.quorum.voters", "1@localhost:" + controllerPort);
@@ -116,7 +101,7 @@ class KafkaEmbeddedCluster implements AutoCloseable
         props.put("num.recovery.threads.per.data.dir", "1");
         props.put("num.replica.alter.log.dirs.threads", "1");
 
-        return props;
+        return new KafkaConfig(props);
     }
 
     public void close()
