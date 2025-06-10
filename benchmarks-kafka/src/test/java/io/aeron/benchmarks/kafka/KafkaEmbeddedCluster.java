@@ -15,19 +15,18 @@
  */
 package io.aeron.benchmarks.kafka;
 
+import io.aeron.benchmarks.Configuration;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaRaftServer;
 import kafka.tools.StorageTool;
 import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.utils.Time;
-import org.apache.kafka.server.common.MetadataVersion;
-import io.aeron.benchmarks.Configuration;
 
+import java.io.BufferedWriter;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
-
-import static java.lang.String.valueOf;
 
 class KafkaEmbeddedCluster implements AutoCloseable
 {
@@ -41,20 +40,39 @@ class KafkaEmbeddedCluster implements AutoCloseable
         Files.createDirectory(logDir);
 
         final Uuid clusterId = Uuid.randomUuid();
-        final KafkaConfig config = createConfig(httpPort, sslPort, controllerPort);
+        final Properties properties = createConfig(httpPort, sslPort, controllerPort);
 
-        StorageTool.formatCommand(
-            System.out,
-            StorageTool.configToLogDirectories(config),
-            StorageTool.buildMetadataProperties(clusterId.toString(), config),
-            MetadataVersion.IBP_3_8_IV0,
-            false);
+        final Path confFile = tempDir.resolve("kafka.conf");
+        try (BufferedWriter writer = Files.newBufferedWriter(confFile))
+        {
+            properties.store(writer, null);
+        }
+
+        final Method parseArguments = StorageTool.class.getDeclaredMethod("parseArguments", String[].class);
+        parseArguments.setAccessible(true);
+        final Object args = parseArguments.invoke(null, (Object)new String[]{
+            "format",
+            "--config", confFile.toAbsolutePath().toString(),
+            "--cluster-id", clusterId.toString(),
+            "--standalone" });
+
+        final KafkaConfig config = new KafkaConfig(properties);
+        final Method[] declaredMethods = StorageTool.class.getDeclaredMethods();
+        for (final Method method : declaredMethods)
+        {
+            if ("runFormatCommand".equals(method.getName()))
+            {
+                method.setAccessible(true);
+                method.invoke(null, args, config, System.out);
+                break;
+            }
+        }
 
         kafka = new KafkaRaftServer(config, Time.SYSTEM);
         kafka.startup();
     }
 
-    private KafkaConfig createConfig(final int httpPort, final int sslPort, final int controllerPort)
+    private Properties createConfig(final int httpPort, final int sslPort, final int controllerPort)
     {
         final Properties props = new Properties();
         final int nodeId = 1;
@@ -69,8 +87,8 @@ class KafkaEmbeddedCluster implements AutoCloseable
             ",CONTROLLER://localhost:" + controllerPort);
         props.put("listener.security.protocol.map",
             "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL");
-        props.put("node.id", nodeId);
-        props.put("broker.id", nodeId);
+        props.put("node.id", Integer.toString(nodeId));
+        props.put("broker.id", Integer.toString(nodeId));
         props.put("log.dir", logDir.toAbsolutePath().toString());
         props.put("advertised.listeners",
             "PLAINTEXT://localhost:" + httpPort + ",SSL://localhost:" + sslPort);
@@ -84,21 +102,21 @@ class KafkaEmbeddedCluster implements AutoCloseable
         props.put("ssl.keystore.type", "PKCS12");
         props.put("ssl.keystore.password", "server");
         props.put("ssl.client.auth", "required");
-        props.put("auto.create.topics.enable", valueOf(true));
-        props.put("message.max.bytes", valueOf(1000000));
-        props.put("controlled.shutdown.enable", valueOf(true));
-        props.put("log.message.downconversion.enable", valueOf(false));
-        props.put("num.partitions", valueOf(1));
-        props.put("default.replication.factor", valueOf(1));
-        props.put("offsets.topic.replication.factor", valueOf(1));
-        props.put("num.network.threads", valueOf(1));
-        props.put("num.io.threads", valueOf(1));
-        props.put("background.threads", valueOf(1));
-        props.put("log.cleaner.threads", valueOf(1));
-        props.put("num.recovery.threads.per.data.dir", valueOf(1));
-        props.put("num.replica.alter.log.dirs.threads", valueOf(1));
+        props.put("auto.create.topics.enable", "true");
+        props.put("message.max.bytes", "1000000");
+        props.put("controlled.shutdown.enable", "true");
+        props.put("log.message.downconversion.enable", "false");
+        props.put("num.partitions", "1");
+        props.put("default.replication.factor", "1");
+        props.put("offsets.topic.replication.factor", "1");
+        props.put("num.network.threads", "1");
+        props.put("num.io.threads", "1");
+        props.put("background.threads", "1");
+        props.put("log.cleaner.threads", "1");
+        props.put("num.recovery.threads.per.data.dir", "1");
+        props.put("num.replica.alter.log.dirs.threads", "1");
 
-        return new KafkaConfig(props);
+        return props;
     }
 
     public void close()

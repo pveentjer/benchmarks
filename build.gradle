@@ -60,6 +60,7 @@ allprojects {
                   libs.errorprone,
                   libs.checker,
                   libs.commons.io,
+                  libs.commons.logging,
                   // patching conflicting Checkstyle dependencies
                   libs.commons.codec,
                   libs.commons.lang3,
