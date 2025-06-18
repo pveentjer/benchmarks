@@ -166,8 +166,22 @@ function download_results()
 
 function await_process_start()
 {
-  local pid=${1}
-  echo "echo 'Await process start'; pid=${pid}; while [ -z \""\${pid}"\" ]; do sleep 0.5; pid=${pid}; done; echo \"pid='"\${pid}"'\""
+  local pid_cmd=${1}
+  echo "
+    echo 'Await process start'
+    count=0
+    pid=${pid_cmd}
+    while [ -z \"\${pid}\" ] && [ \${count} -lt 120 ]; do
+      sleep 0.5
+      pid=${pid_cmd}
+      count=\$((count + 1))
+    done
+    if [ -z \"\${pid}\" ]; then
+      echo 'Timeout: process not found after 60 seconds.'
+      exit 1
+    fi
+    echo \"pid='\${pid}'\"
+  "
 }
 
 function find_java_process()
