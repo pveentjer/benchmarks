@@ -170,16 +170,17 @@ function await_process_start()
 
   # note: this multiline string is converted to single line string at the end of this function
   local script="
-    pid=${pid_cmd};
+    echo 'Await process start';
     count=0;
+    pid=${pid_cmd};
     while [ -z \"\${pid}\" ] && [ \${count} -lt 120 ]; do
       sleep 0.5;
       pid=${pid_cmd};
       count=\$((count + 1));
     done;
-    if [ \${count} -ge 120 ]; then
-      echo \"Timeout waiting for process to start\" >&2;
-      exit 1;
+    if [ -z \"\${pid}\" ]; then
+       echo 'Timeout: process not found after 60 seconds.';
+       exit 1;
     fi;
     echo \"pid='\${pid}'\"
   "
@@ -207,15 +208,16 @@ function pin_thread()
 
   # note: this multiline string is converted to single line string at the end of this function
   local script="
-    tid=${tid_cmd};
+    echo 'Pinning thread: ${thread_name}';
     count=0;
+    tid=${tid_cmd};
     while [ -z \"\${tid}\" ] && [ \${count} -lt 600 ]; do
       sleep 0.1;
       tid=${tid_cmd};
       count=\$((count + 1));
     done;
-    if [ \${count} -ge 600 ]; then
-      echo \"Timeout waiting for thread ${thread_name} to start\" >&2;
+    if [ -z \"\${tid}\" ]; then
+      echo 'Timeout: thread ${thread_name} not found after 60 seconds.';
       exit 1;
     fi;
     echo \"tid_${thread_name}='\${tid}'\";
