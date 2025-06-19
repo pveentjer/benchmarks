@@ -168,6 +168,7 @@ function await_process_start()
 {
   local pid_cmd=${1}
   echo "
+    set -e
     echo 'Await process start'
     count=0
     pid=${pid_cmd}
