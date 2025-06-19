@@ -167,22 +167,23 @@ function download_results()
 function await_process_start()
 {
   local pid_cmd=${1}
-  echo "
-    set -e
-    echo 'Await process start'
-    count=0
-    pid=${pid_cmd}
+
+  # note: this multiline string is converted to single line string at the end of this function
+  local script="
+    pid=${pid_cmd};
+    count=0;
     while [ -z \"\${pid}\" ] && [ \${count} -lt 120 ]; do
-      sleep 0.5
-      pid=${pid_cmd}
-      count=\$((count + 1))
-    done
-    if [ -z \"\${pid}\" ]; then
-      echo 'Timeout: process not found after 60 seconds.'
-      exit 1
-    fi
+      sleep 0.5;
+      pid=${pid_cmd};
+      count=\$((count + 1));
+    done;
+    if [ \${count} -ge 120 ]; then
+      echo \"Timeout waiting for process to start\" >&2;
+      exit 1;
+    fi;
     echo \"pid='\${pid}'\"
   "
+  echo "${script}" | tr '\n' ' '
 }
 
 function find_java_process()
@@ -203,25 +204,26 @@ function pin_thread()
   local thread_name=${2}
   local core=${3}
   local tid_cmd="\$(ps Ho tid,comm -p ${pid} | awk '/${thread_name}/{print \$1}' | head -1)"
-  echo "
-    set -e
-    echo 'Pinning thread: ${thread_name}'
-    count=0
-    tid=${tid_cmd}
+
+  # note: this multiline string is converted to single line string at the end of this function
+  local script="
+    tid=${tid_cmd};
+    count=0;
     while [ -z \"\${tid}\" ] && [ \${count} -lt 600 ]; do
-      sleep 0.1
-      tid=${tid_cmd}
-      count=\$((count + 1))
-    done
-    if [ -z \"\${tid}\" ]; then
-      echo 'Timeout: thread ${thread_name} not found after 60 seconds.'
-      exit 1
-    fi
-    echo \"tid_${thread_name}='\${tid}'\"
+      sleep 0.1;
+      tid=${tid_cmd};
+      count=\$((count + 1));
+    done;
+    if [ \${count} -ge 600 ]; then
+      echo \"Timeout waiting for thread ${thread_name} to start\" >&2;
+      exit 1;
+    fi;
+    echo \"tid_${thread_name}='\${tid}'\";
     taskset -p -c ${core} \${tid}
   "
-}
 
+  echo "${script}" | tr '\n' ' '
+}
 
 function kill_java_process()
 {
