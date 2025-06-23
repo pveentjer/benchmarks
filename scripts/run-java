@@ -58,7 +58,7 @@ then
 fi
 
 exec "${JAVA_HOME}/bin/java" \
-  -cp "${DIR}/../benchmarks-all/build/libs/*.jar" \
+  -cp "${DIR}"/../benchmarks-all/build/libs/*.jar \
   "${java_options[@]}" \
   "${add_opens[@]}" \
   "${jvm_opts[@]}" \
