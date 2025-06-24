@@ -217,7 +217,7 @@ function pin_thread()
       count=\$((count + 1));
     done;
     if [ -z \"\${tid}\" ]; then
-      echo 'Timeout: thread ${thread_name} not found after 60 seconds.';
+      echo 'Timeout: thread ${thread_name} not found after 60 seconds for pid_cmd ${pid_cmd}';
       exit 1;
     fi;
     echo \"tid_${thread_name}='\${tid}'\";
