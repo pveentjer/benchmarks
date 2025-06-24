@@ -1,7 +1,7 @@
 [versions]
 agrona = "2.2.3"
 aeron = "1.48.3"
-checkstyle = "10.25.0"
+checkstyle = "10.25.1"
 checker = "3.43.0"
 commons-codec = "1.15"
 commons-lang3 = "3.8.1"
