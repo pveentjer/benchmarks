@@ -479,6 +479,7 @@ class AeronUtilTest
         assertFalse(Files.exists(errorsFile));
     }
 
+    @SuppressWarnings({ "Indentation" })
     @Test
     void dumpClusterErrorsSavesErrorsRecordedInTheMarkFile(
         @TempDir final Path resultsDir,
