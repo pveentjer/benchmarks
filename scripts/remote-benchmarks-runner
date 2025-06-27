@@ -134,7 +134,9 @@ function run_benchmarks()
             rm /dev/shm/*-gc.log 2>/dev/null || true; \
             rm /dev/shm/*-crash.log 2>/dev/null || true; \
             rm /dev/shm/*.jfr 2>/dev/null || true; \
-            true; exit"
+            true; \
+            touch /tmp/foo; \
+            exit"
 
         echo -e "\nStopping server..."
         execute_remote_command \
@@ -149,7 +151,9 @@ function run_benchmarks()
             rm /dev/shm/*-crash.log 2>/dev/null || true; \
             rm /dev/shm/*.jfr 2>/dev/null || true; \
             cp /tmp/benchmarks-server.log \"${server_results_dir}/logs\" 2>/dev/null || true; \
-            true; exit"
+            true; \
+            touch /tmp/foo; \
+            exit"
       done
     done
   done
