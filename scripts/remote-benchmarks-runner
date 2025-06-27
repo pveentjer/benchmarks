@@ -123,37 +123,10 @@ function run_benchmarks()
         jvm_opts+="-Dio.aeron.benchmarks.output.directory=${client_results_dir}\""
 
         echo -e "\nStarting client..."
-        execute_remote_command \
-            "${SSH_CLIENT_USER}" \
-            "${SSH_CLIENT_KEY_FILE}" \
-            "${SSH_CLIENT_NODE}" \
-            "${jvm_opts} && ${client_command}; \
-            cp /dev/shm/*-gc.log \"${client_results_dir}/logs\" 2>/dev/null || true; \
-            cp /dev/shm/*-crash.log \"${client_results_dir}/logs\" 2>/dev/null || true; \
-            cp /dev/shm/*.jfr \"${client_results_dir}/logs\" 2>/dev/null || true; \
-            rm /dev/shm/*-gc.log 2>/dev/null || true; \
-            rm /dev/shm/*-crash.log 2>/dev/null || true; \
-            rm /dev/shm/*.jfr 2>/dev/null || true; \
-            true; \
-            touch /tmp/foo; \
-            exit"
+        echo -e "\nStarting client..."; execute_remote_command "${SSH_CLIENT_USER}" "${SSH_CLIENT_KEY_FILE}" "${SSH_CLIENT_NODE}" "${jvm_opts} && ${client_command}; cp /dev/shm/*.jfr \"${client_results_dir}/logs\" 2>/dev/null || true; cp /dev/shm/*-gc.log \"${client_results_dir}/logs\" 2>/dev/null || true; cp /dev/shm/*-crash.log \"${client_results_dir}/logs\" 2>/dev/null || true; rm /dev/shm/*.jfr 2>/dev/null || true; rm /dev/shm/*-gc.log 2>/dev/null || true; rm /dev/shm/*-crash.log 2>/dev/null || true; true; exit"
 
         echo -e "\nStopping server..."
-        execute_remote_command \
-            "${SSH_SERVER_USER}" \
-            "${SSH_SERVER_KEY_FILE}" \
-            "${SSH_SERVER_NODE}" \
-            "${server_stop_command}; \
-            cp /dev/shm/*-gc.log \"${server_results_dir}/logs\" 2>/dev/null || true; \
-            cp /dev/shm/*-crash.log \"${server_results_dir}/logs\" 2>/dev/null || true; \
-            cp /dev/shm/*.jfr \"${server_results_dir}/logs\" 2>/dev/null || true; \
-            rm /dev/shm/*-gc.log 2>/dev/null || true; \
-            rm /dev/shm/*-crash.log 2>/dev/null || true; \
-            rm /dev/shm/*.jfr 2>/dev/null || true; \
-            cp /tmp/benchmarks-server.log \"${server_results_dir}/logs\" 2>/dev/null || true; \
-            true; \
-            touch /tmp/foo; \
-            exit"
+        execute_remote_command "${SSH_SERVER_USER}" "${SSH_SERVER_KEY_FILE}" "${SSH_SERVER_NODE}" "${server_stop_command}; cp /dev/shm/*.jfr \"${server_results_dir}/logs\" 2>/dev/null || true; cp /dev/shm/*-gc.log \"${server_results_dir}/logs\" 2>/dev/null || true; cp /dev/shm/*-crash.log \"${server_results_dir}/logs\" 2>/dev/null || true; rm /dev/shm/*.jfr 2>/dev/null || true; rm /dev/shm/*-gc.log 2>/dev/null || true; rm /dev/shm/*-crash.log 2>/dev/null || true; cp /tmp/benchmarks-server.log \"${server_results_dir}/logs\" 2>/dev/null || true; true; exit"
       done
     done
   done

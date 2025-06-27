@@ -358,7 +358,7 @@ do
           && tail --pid=\$! -f /dev/null; kill -9 \${echo_pid}; kill -9 \${media_driver_pid}; wait"
 
           echo -e "\nRunning benchmark..."
-          execute_remote_command "${SSH_CLIENT_USER}" "${SSH_CLIENT_KEY_FILE}" "${SSH_CLIENT_NODE}" "${benchmark_command}; cp /dev/shm/*-gc.log \"${BENCHMARKS_PATH}/${output_dir}/logs\"; cp /dev/shm/*-crash.log \"${BENCHMARKS_PATH}/${output_dir}/logs\"; rm /dev/shm/*-gc.log; rm /dev/shm/*-crash.log; true; exit"
+          execute_remote_command "${SSH_CLIENT_USER}" "${SSH_CLIENT_KEY_FILE}" "${SSH_CLIENT_NODE}" "${benchmark_command}; cp /dev/shm/*-gc.log \"${BENCHMARKS_PATH}/${output_dir}/logs\" 2>/dev/null || true; cp /dev/shm/*-crash.log \"${BENCHMARKS_PATH}/${output_dir}/logs\" 2>/dev/null || true; cp /dev/shm/*.jfr \"${BENCHMARKS_PATH}/${output_dir}/logs\" 2>/dev/null || true; rm /dev/shm/*-gc.log 2>/dev/null || true; rm /dev/shm/*-crash.log 2>/dev/null || true; rm /dev/shm/*.jfr 2>/dev/null || true; true; exit"
         done
       done
     done
