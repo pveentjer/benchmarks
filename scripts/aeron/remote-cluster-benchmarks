@@ -593,7 +593,20 @@ do
             done
 
             echo -e "\nRunning benchmark..."
-            execute_remote_command "${SSH_CLIENT_USER}" "${SSH_CLIENT_KEY_FILE}" "${SSH_CLIENT_NODE}" "${start_client}; cp /dev/shm/*.jfr \"${CLIENT_BENCHMARKS_PATH}/${output_dir}/logs\" 2>/dev/null || true; cp /dev/shm/*-gc.log \"${CLIENT_BENCHMARKS_PATH}/${output_dir}/logs\" 2>/dev/null || true; cp /dev/shm/*-crash.log \"${CLIENT_BENCHMARKS_PATH}/${output_dir}/logs\" 2>/dev/null || true; rm /dev/shm/*.jfr 2>/dev/null || true; rm /dev/shm/*-gc.log 2>/dev/null || true; rm /dev/shm/*-crash.log 2>/dev/null || true; true; exit"
+            execute_remote_command \
+              "${SSH_CLIENT_USER}" \
+              "${SSH_CLIENT_KEY_FILE}" \
+              "${SSH_CLIENT_NODE}" \
+              "\
+                ${start_client}; \
+                cp /dev/shm/*.jfr \"${CLIENT_BENCHMARKS_PATH}/${output_dir}/logs\" 2>/dev/null || true; \
+                cp /dev/shm/*-gc.log \"${CLIENT_BENCHMARKS_PATH}/${output_dir}/logs\" 2>/dev/null || true; \
+                cp /dev/shm/*-crash.log \"${CLIENT_BENCHMARKS_PATH}/${output_dir}/logs\" 2>/dev/null || true; \
+                rm /dev/shm/*.jfr 2>/dev/null || true; \
+                rm /dev/shm/*-gc.log 2>/dev/null || true; \
+                rm /dev/shm/*-crash.log 2>/dev/null || true; \
+                true; \
+                exit"
 
             for (( n=0; n<CLUSTER_BACKUP_NODES; n++ ))
             do
@@ -602,7 +615,23 @@ do
               ssh_key_file=SSH_CLUSTER_BACKUP_KEY_FILE${n}
               ssh_node=SSH_CLUSTER_BACKUP_NODE${n}
               server_benchmarks_path=BACKUP_NODE${n}_BENCHMARKS_PATH
-              execute_remote_command \"${!ssh_user}\" \"${!ssh_key_file}\" \"${!ssh_node}\" \"$(stop_java_process \\\"${cluster_backup_node_class_name}\\\"); $(stop_media_driver); cp /dev/shm/*.jfr \\\"${!server_benchmarks_path}/${output_dir}/logs\\\" 2>/dev/null || true; cp /dev/shm/*-gc.log \\\"${!server_benchmarks_path}/${output_dir}/logs\\\" 2>/dev/null || true; cp /dev/shm/*-crash.log \\\"${!server_benchmarks_path}/${output_dir}/logs\\\" 2>/dev/null || true; rm /dev/shm/*.jfr 2>/dev/null || true; rm /dev/shm/*-gc.log 2>/dev/null || true; rm /dev/shm/*-crash.log 2>/dev/null || true; cp /tmp/benchmarks-cluster-*.log \\\"${!server_benchmarks_path}/${output_dir}/logs\\\" 2>/dev/null || true; true; exit\"
+              execute_remote_command \
+                "${!ssh_user}" \
+                "${!ssh_key_file}" \
+                "${!ssh_node}" \
+                "\
+                  $(stop_java_process \"${cluster_backup_node_class_name}\"); \
+                  $(stop_media_driver); \
+                  cp /dev/shm/*.jfr \"${!server_benchmarks_path}/${output_dir}/logs\" 2>/dev/null || true; \
+                  cp /dev/shm/*-gc.log \"${!server_benchmarks_path}/${output_dir}/logs\" 2>/dev/null || true; \
+                  cp /dev/shm/*-crash.log \"${!server_benchmarks_path}/${output_dir}/logs\" 2>/dev/null || true; \
+                  rm /dev/shm/*.jfr 2>/dev/null || true; \
+                  rm /dev/shm/*-gc.log 2>/dev/null || true; \
+                  rm /dev/shm/*-crash.log 2>/dev/null || true; \
+                  cp /tmp/benchmarks-cluster-*.log \"${!server_benchmarks_path}/${output_dir}/logs\" 2>/dev/null || true; \
+                  true; \
+                  exit"
+
             done
 
             for (( n=0; n<CLUSTER_SIZE; n++ ))
@@ -612,7 +641,23 @@ do
               ssh_key_file=SSH_CLUSTER_KEY_FILE${n}
               ssh_node=SSH_CLUSTER_NODE${n}
               server_benchmarks_path=NODE${n}_BENCHMARKS_PATH
-              execute_remote_command "${!ssh_user}" "${!ssh_key_file}" "${!ssh_node}" "$(stop_java_process \"${cluster_node_class_name}\"); $(stop_media_driver); cp /dev/shm/*.jfr \"${!server_benchmarks_path}/${output_dir}/logs\" 2>/dev/null || true; cp /dev/shm/*-gc.log \"${!server_benchmarks_path}/${output_dir}/logs\" 2>/dev/null || true; cp /dev/shm/*-crash.log \"${!server_benchmarks_path}/${output_dir}/logs\" 2>/dev/null || true; rm /dev/shm/*.jfr 2>/dev/null || true; rm /dev/shm/*-gc.log 2>/dev/null || true; rm /dev/shm/*-crash.log 2>/dev/null || true; cp /tmp/benchmarks-cluster-*.log \"${!server_benchmarks_path}/${output_dir}/logs\" 2>/dev/null || true; true; exit"
+              execute_remote_command \
+                "${!ssh_user}" \
+                "${!ssh_key_file}" \
+                "${!ssh_node}" \
+                "\
+                  $(stop_java_process \"${cluster_node_class_name}\"); \
+                  $(stop_media_driver); \
+                  cp /dev/shm/*.jfr \"${!server_benchmarks_path}/${output_dir}/logs\" 2>/dev/null || true; \
+                  cp /dev/shm/*-gc.log \"${!server_benchmarks_path}/${output_dir}/logs\" 2>/dev/null || true; \
+                  cp /dev/shm/*-crash.log \"${!server_benchmarks_path}/${output_dir}/logs\" 2>/dev/null || true; \
+                  rm /dev/shm/*.jfr 2>/dev/null || true; \
+                  rm /dev/shm/*-gc.log 2>/dev/null || true; \
+                  rm /dev/shm/*-crash.log 2>/dev/null || true; \
+                  cp /tmp/benchmarks-cluster-*.log \"${!server_benchmarks_path}/${output_dir}/logs\" 2>/dev/null || true; \
+                  true; \
+                  exit"
+
             done
           done
         done
