@@ -17,7 +17,7 @@
 
 set -exo pipefail
 
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}") >/dev/null 2>&1 && pwd)"
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 class_name=${1##*.}
 log_file_name=${PROCESS_FILE_NAME:-${class_name}-%p}
@@ -44,15 +44,17 @@ java_options=(
   -XX:MaxMetaspaceSize=1G
   -XX:ReservedCodeCacheSize=1G
   -XX:+EnableDynamicAgentLoading
-  "-Xlog:gc*,safepoint=info,arguments=info:file=${gc_log_file}:time"
-)
+  "-Xlog:gc*,safepoint=info,arguments=info:file=${gc_log_file}:time")
 
 add_opens=(--add-opens java.base/java.util.zip=ALL-UNNAMED --add-opens java.base/jdk.internal.misc=ALL-UNNAMED)
 
 jvm_opts=()
+
 if [[ -v JVM_OPTS && -n "${JVM_OPTS}" ]]
 then
-  IFS=' ' read -ra jvm_opts <<< "${JVM_OPTS}"; unset IFS;
+  IFS=' ';
+  read -ra jvm_opts <<< "${JVM_OPTS}"
+  unset IFS;
 fi
 
 declare -A SYS_PROPS
