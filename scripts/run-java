@@ -68,24 +68,43 @@ for opt in "${jvm_opts[@]}"; do
     SYS_PROPS[$name]="$val"
   fi
 done
-
 # second step is to replace the placeholder by their values.
 for i in "${!jvm_opts[@]}"; do
-  current_opt="${jvm_opts[$i]}"
-  echo "Processing: $current_opt"
+  opt="${jvm_opts[$i]}"
 
-  for name in "${!SYS_PROPS[@]}"; do
-    # Use bash parameter expansion instead of sed
-    current_opt="${current_opt//\[$name\]/${SYS_PROPS[$name]}}"
-    echo "Result: $current_opt"
+  # keep looping until we've replaced all [NAME] placeholders
+  while [[ $opt =~ \[([A-Za-z_][A-Za-z0-9_]*)\] ]]; do
+    key="${BASH_REMATCH[1]}"
+
+    if [[ -n "${!key+x}" ]]; then
+      # env var is set (even if empty)
+      val="${!key}"
+      echo "Env    key=${key} value=${val}"
+    elif [[ -n "${SYS_PROPS[$key]+x}" ]]; then
+      # fallback to SYS_PROPS
+      val="${SYS_PROPS[$key]}"
+      echo "SysProp key=${key} value=${val}"
+    else
+      # neither set
+      echo "Warning: no value for placeholder [${key}]"
+      val=""
+    fi
+
+    # replace _all_ occurrences of [key] in the string
+    opt="${opt//\[$key\]/$val}"
   done
-  jvm_opts[$i]="$current_opt"
+
+  jvm_opts[$i]="$opt"
+  echo "Final: $opt"
 done
 
 echo "Resolved jvm_opts:"
 printf '  %s\n' "${jvm_opts[@]}"
 
 if [[ -n "${SYS_PROPS['io.aeron.benchmarks.output.directory']}" ]]; then
+  # the directory is made late and this leads to problems with e.g. async-profiler that
+  # requires for the directory to exist. So this forces the directory to be made before
+  # the java process is started.
   output_dir="${SYS_PROPS['io.aeron.benchmarks.output.directory']}"
   echo "Creating output directory: $output_dir"
   mkdir -p "$output_dir"
