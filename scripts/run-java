@@ -85,7 +85,7 @@ for i in "${!jvm_opts[@]}"; do
       val=""
     fi
 
-    opt="${opt//\[$key\]/val}"
+    opt="${opt//\[$key\]/$val}"
   done
 
   jvm_opts[$i]="$opt"
