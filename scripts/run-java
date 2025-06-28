@@ -73,6 +73,9 @@ for i in "${!jvm_opts[@]}"; do
   done
 done
 
+echo "Resolved jvm_opts:"
+printf '  %s\n' "${jvm_opts[@]}"
+
 exec "${JAVA_HOME}/bin/java" \
   -cp "${DIR}/../benchmarks-all/build/libs/benchmarks.jar" \
   "${java_options[@]}" \
