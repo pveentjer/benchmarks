@@ -55,27 +55,23 @@ then
   IFS=' ' read -ra jvm_opts <<< "${JVM_OPTS}"; unset IFS;
 fi
 
-fixjvmopts() {
-  declare -A SYS_PROPS kv name val opt
-
-  for opt in "${jvm_opts[@]}"; do
-    if [[ $opt == -D*=* ]]; then
-      kv="${opt#-D}"
-      name="${kv%%=*}"
-      val="${kv#*=}"
-      SYS_PROPS[$name]="$val"
-    fi
+# Resolving place holders in the jvm_opts.
+# first step is to load all the system properties.
+declare -A SYS_PROPS kv name val opt
+for opt in "${jvm_opts[@]}"; do
+  if [[ $opt == -D*=* ]]; then
+    kv="${opt#-D}"
+    name="${kv%%=*}"
+    val="${kv#*=}"
+    SYS_PROPS[$name]="$val"
+  fi
+done
+# second step is to replace the placeholder by their values.
+for i in "${!jvm_opts[@]}"; do
+  for name in "${!SYS_PROPS[@]}"; do
+    jvm_opts[$i]="${jvm_opts[$i]//\[$name\]/${SYS_PROPS[$name]}}"
   done
-
-  for i in "${!jvm_opts[@]}"; do
-    for name in "${!SYS_PROPS[@]}"; do
-      jvm_opts[$i]="${jvm_opts[$i]//\[$name\]/$SYS_PROPS[$name]}}"
-    done
-  done
-}
-
-
-fixjvmopts
+done
 
 exec "${JAVA_HOME}/bin/java" \
   -cp "${DIR}/../benchmarks-all/build/libs/benchmarks.jar" \
