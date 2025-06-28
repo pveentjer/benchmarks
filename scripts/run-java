@@ -63,13 +63,18 @@ for opt in "${jvm_opts[@]}"; do
     kv="${opt#-D}"
     name="${kv%%=*}"
     val="${kv#*=}"
+    echo "key=${key} value=${value}"
     SYS_PROPS[$name]="$val"
   fi
 done
 # second step is to replace the placeholder by their values.
 for i in "${!jvm_opts[@]}"; do
   for name in "${!SYS_PROPS[@]}"; do
-    jvm_opts[$i]="${jvm_opts[$i]//\[$name\]/${SYS_PROPS[$name]}}"
+      original_jvm_opt="${jvm_opts[$i]}"
+      echo "original_jvm_opt ${original_jvm_opt}"
+      replacement_jvm_opt="${original_jvm_opt//\[$name\]/${SYS_PROPS[$name]}}"
+      echo "replacement_jvm_opt ${replacement_jvm_opt}"
+      jvm_opts[$i]="${replacement_jvm_opt}"
   done
 done
 
