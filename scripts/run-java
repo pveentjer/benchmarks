@@ -55,29 +55,28 @@ then
   IFS=' ' read -ra jvm_opts <<< "${JVM_OPTS}"; unset IFS;
 fi
 
-# Resolving place holders in the jvm_opts.
-# first step is to load all the system properties.
 declare -A SYS_PROPS
-declare kv name val opt
+
 for opt in "${jvm_opts[@]}"; do
   if [[ $opt == -D*=* ]]; then
     kv="${opt#-D}"
     name="${kv%%=*}"
     val="${kv#*=}"
-    echo "key=${name} value=${val}"  # Fixed variable names
+    echo "key=${name} value=${val}"
     SYS_PROPS[$name]="$val"
   fi
 done
 
 # second step is to replace the placeholder by their values.
 for i in "${!jvm_opts[@]}"; do
+  current_opt="${jvm_opts[$i]}"
   for name in "${!SYS_PROPS[@]}"; do
-      original_jvm_opt="${jvm_opts[$i]}"
-      echo "original_jvm_opt ${original_jvm_opt}"
-      replacement_jvm_opt="${original_jvm_opt//\[$name\]/${SYS_PROPS[$name]}}"
-      echo "replacement_jvm_opt ${replacement_jvm_opt}"
-      jvm_opts[$i]="${replacement_jvm_opt}"
+    echo "Processing: $current_opt"
+    # Use sed for the replacement instead of parameter expansion
+    current_opt=$(echo "$current_opt" | sed "s/\[$name\]/${SYS_PROPS[$name]}/g")
+    echo "Result: $current_opt"
   done
+  jvm_opts[$i]="$current_opt"
 done
 
 echo "Resolved jvm_opts:"
