@@ -72,30 +72,27 @@ done
 for i in "${!jvm_opts[@]}"; do
   opt="${jvm_opts[$i]}"
 
-  # keep looping until we've replaced all [NAME] placeholders
-  while [[ $opt =~ \[([A-Za-z_][A-Za-z0-9_]*)\] ]]; do
+  # repeat until no [KEY] remains
+  while [[ $opt =~ \[([A-Za-z_][A-Za-z0-9_\.]*)\] ]]; do
     key="${BASH_REMATCH[1]}"
 
-    if [[ -n "${!key+x}" ]]; then
-      # env var is set (even if empty)
+    if [[ -v $key ]]; then
       val="${!key}"
-      echo "Env    key=${key} value=${val}"
     elif [[ -n "${SYS_PROPS[$key]+x}" ]]; then
-      # fallback to SYS_PROPS
       val="${SYS_PROPS[$key]}"
-      echo "SysProp key=${key} value=${val}"
     else
-      # neither set
-      echo "Warning: no value for placeholder [${key}]"
+      echo "Warning: no value for placeholder [$key]"
       val=""
     fi
 
-    # replace _all_ occurrences of [key] in the string
-    opt="${opt//\[$key\]/$val}"
+    # escape any "/" in the value so the // replacement isn't broken
+    esc_val="${val//\//\\/}"
+
+    # global replace of the literal "[KEY]"
+    opt="${opt//\[$key\]/$esc_val}"
   done
 
   jvm_opts[$i]="$opt"
-  echo "Final: $opt"
 done
 
 echo "Resolved jvm_opts:"
