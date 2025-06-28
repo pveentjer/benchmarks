@@ -72,8 +72,9 @@ done
 # second step is to replace the placeholder by their values.
 for i in "${!jvm_opts[@]}"; do
   current_opt="${jvm_opts[$i]}"
+  echo "Processing: $current_opt"
+
   for name in "${!SYS_PROPS[@]}"; do
-    echo "Processing: $current_opt"
     # Use bash parameter expansion instead of sed
     current_opt="${current_opt//\[$name\]/${SYS_PROPS[$name]}}"
     echo "Result: $current_opt"
@@ -83,6 +84,13 @@ done
 
 echo "Resolved jvm_opts:"
 printf '  %s\n' "${jvm_opts[@]}"
+
+if [[ -n "${SYS_PROPS['io.aeron.benchmarks.output.directory']}" ]]; then
+  output_dir="${SYS_PROPS['io.aeron.benchmarks.output.directory']}"
+  echo "Creating output directory: $output_dir"
+  mkdir -p "$output_dir"
+fi
+
 
 exec "${JAVA_HOME}/bin/java" \
   -cp "${DIR}/../benchmarks-all/build/libs/benchmarks.jar" \
