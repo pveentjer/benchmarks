@@ -85,11 +85,7 @@ for i in "${!jvm_opts[@]}"; do
       val=""
     fi
 
-    # escape any "/" in the value so the // replacement isn't broken
-    esc_val="${val//\//\\/}"
-
-    # global replace of the literal "[KEY]"
-    opt="${opt//\[$key\]/$esc_val}"
+    opt="${opt//\[$key\]/val}"
   done
 
   jvm_opts[$i]="$opt"
