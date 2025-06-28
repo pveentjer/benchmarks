@@ -17,7 +17,7 @@
 
 set -exo pipefail
 
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}") >/dev/null 2>&1 && pwd)"
 
 class_name=${1##*.}
 log_file_name=${PROCESS_FILE_NAME:-${class_name}-%p}
@@ -44,18 +44,38 @@ java_options=(
   -XX:MaxMetaspaceSize=1G
   -XX:ReservedCodeCacheSize=1G
   -XX:+EnableDynamicAgentLoading
-  "-Xlog:gc*,safepoint=info,arguments=info:file=${gc_log_file}:time")
+  "-Xlog:gc*,safepoint=info,arguments=info:file=${gc_log_file}:time"
+)
 
 add_opens=(--add-opens java.base/java.util.zip=ALL-UNNAMED --add-opens java.base/jdk.internal.misc=ALL-UNNAMED)
 
 jvm_opts=()
-
 if [[ -v JVM_OPTS && -n "${JVM_OPTS}" ]]
 then
-  IFS=' ';
-  read -ra jvm_opts <<< "${JVM_OPTS}"
-  unset IFS;
+  IFS=' ' read -ra jvm_opts <<< "${JVM_OPTS}"; unset IFS;
 fi
+
+fixjvmopts() {
+  declare -A SYS_PROPS kv name val opt
+
+  for opt in "${jvm_opts[@]}"; do
+    if [[ $opt == -D*=* ]]; then
+      kv="${opt#-D}"
+      name="${kv%%=*}"
+      val="${kv#*=}"
+      SYS_PROPS[$name]="$val"
+    fi
+  done
+
+  for i in "${!jvm_opts[@]}"; do
+    for name in "${!SYS_PROPS[@]}"; do
+      jvm_opts[$i]="${jvm_opts[$i]//\[$name\]/$SYS_PROPS[$name]}}"
+    done
+  done
+}
+
+
+fixjvmopts
 
 exec "${JAVA_HOME}/bin/java" \
   -cp "${DIR}/../benchmarks-all/build/libs/benchmarks.jar" \
