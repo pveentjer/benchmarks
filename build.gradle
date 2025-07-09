@@ -21,6 +21,7 @@ plugins {
     alias(libs.plugins.protobuf).apply(false)
 }
 
+
 defaultTasks 'clean', 'build'
 
 static int getBuildJavaVersion() {
@@ -35,6 +36,8 @@ static int getBuildJavaVersion() {
 }
 int buildJavaVersion = getBuildJavaVersion()
 
+def benchmarksVersion = file('version.txt').text.trim()
+
 def toolchainLauncher = javaToolchains.launcherFor {
     languageVersion = JavaLanguageVersion.of(buildJavaVersion)
 }
@@ -44,6 +47,9 @@ def toolchainCompiler = javaToolchains.compilerFor {
 }
 
 allprojects {
+    group = 'io.aeron.benchmarks'
+    version = benchmarksVersion
+
     repositories {
         mavenLocal()
         mavenCentral()
@@ -75,6 +81,18 @@ subprojects {
     apply plugin: 'checkstyle'
 
     checkstyle.toolVersion = libs.versions.checkstyle.get()
+
+    apply plugin: 'maven-publish'
+
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                artifactId = project.name
+            }
+        }
+    }
 
     dependencies {
         testImplementation platform("org.junit:junit-bom:${libs.versions.junit.get()}")
