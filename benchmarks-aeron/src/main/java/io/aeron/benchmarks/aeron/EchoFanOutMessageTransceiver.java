@@ -33,6 +33,8 @@ import io.aeron.benchmarks.Configuration;
 import io.aeron.benchmarks.MessageTransceiver;
 import io.aeron.benchmarks.PersistedHistogramSet;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -122,6 +124,7 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
         private long    nextStallNs      = Long.MAX_VALUE;
         private boolean stallPending     = false;
         private int     stallReceiver    = 0;
+        private long    runningChecksum = 0;
 
         private final   Random messageIdRandom = new Random(MESSAGE_ID_SEED);
 
@@ -215,7 +218,9 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
         {
             buffer.putLong(offset + TIMESTAMP_OFFSET, timestamp, LITTLE_ENDIAN);
             buffer.putInt(offset + RECEIVER_INDEX_OFFSET, receiver, LITTLE_ENDIAN);
-            buffer.putLong(offset + MESSAGE_ID_OFFSET, messageIdRandom.nextLong(), LITTLE_ENDIAN);
+            long messageId = messageIdRandom.nextLong();
+            runningChecksum = Long.rotateLeft(runningChecksum, 1) ^ murmur3Checksum(messageId);
+            buffer.putLong(offset + MESSAGE_ID_OFFSET, messageId, LITTLE_ENDIAN);
 
             if (stallPending && receiver == stallReceiver)
             {
@@ -445,6 +450,18 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
             aeron.context().cncFile(),
             logsDir.resolve(prefix + "aeron-stat.txt"),
             logsDir.resolve(prefix + "errors.txt"));
+
+        final Path checksumFile = logsDir.resolve(prefix + "checksum.txt");
+        try
+        {
+            Files.writeString(
+                checksumFile,
+                String.format("0x%016X%n", this.strategy.runningChecksum));
+        }
+        catch (IOException e)
+        {
+            System.out.println("Failed to persist checksum file after run due to: " + e.getMessage());
+        }
 
         closeAll(aeronArchive);
         closeAll(subscriptions);

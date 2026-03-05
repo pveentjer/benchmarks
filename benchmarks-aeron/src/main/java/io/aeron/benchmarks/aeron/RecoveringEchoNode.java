@@ -51,6 +51,7 @@ import static io.aeron.benchmarks.aeron.AeronUtil.destinationChannel;
 import static io.aeron.benchmarks.aeron.AeronUtil.destinationStreamId;
 import static io.aeron.benchmarks.aeron.AeronUtil.idleStrategy;
 import static io.aeron.benchmarks.aeron.AeronUtil.launchEmbeddedMediaDriverIfConfigured;
+import static io.aeron.benchmarks.aeron.AeronUtil.murmur3Checksum;
 import static io.aeron.benchmarks.aeron.AeronUtil.receiverIndex;
 import static io.aeron.benchmarks.aeron.AeronUtil.sourceChannel;
 import static io.aeron.benchmarks.aeron.AeronUtil.sourceStreamId;
@@ -100,33 +101,6 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
     static final int PROCESSING_TIME_OFFSET = RECEIVER_INDEX_OFFSET + SIZE_OF_INT;
     static final int MESSAGE_ID_OFFSET      = PROCESSING_TIME_OFFSET + SIZE_OF_LONG;
 
-    // Murmur3 64-bit finalisation mix constants
-    private static final long MIX_CONSTANT_1 = 0xff51afd7ed558ccdL;
-    private static final long MIX_CONSTANT_2 = 0xc4ceb9fe1a85ec53L;
-
-    /**
-     * Derives a 64-bit checksum from a message id using the Murmur3 finalisation mix.
-     * <p>
-     * The sender writes this into the message id slot of every message.
-     * Each receiver recomputes it from the {@code messageId} field,
-     * at the end ot the run cehcksums between receivers must match inidicating
-     * all messages are received in the same order.
-     *
-     * @param messageId the per-message id written at {@link #MESSAGE_ID_OFFSET}
-     * @return a deterministic 64-bit hash of {@code messageId}
-     */
-    static long messageIdChecksum(final long messageId)
-    {
-        long hash = messageId;
-
-        hash ^= hash >>> 33;
-        hash *= MIX_CONSTANT_1;
-        hash ^= hash >>> 33;
-        hash *= MIX_CONSTANT_2;
-        hash ^= hash >>> 33;
-
-        return hash;
-    }
     // -------------------------------------------------------------------------
 
     private final BufferClaim bufferClaim = new BufferClaim();
@@ -191,7 +165,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
         fragmentHandler = (buffer, offset, length, header) ->
         {
             final long messageId = buffer.getLong(offset + MESSAGE_ID_OFFSET, LITTLE_ENDIAN);
-            runningChecksum ^= messageIdChecksum(messageId);
+            runningChecksum = Long.rotateLeft(runningChecksum, 1) ^ murmur3Checksum(messageId);
 
             if (buffer.getInt(offset + RECEIVER_INDEX_OFFSET, LITTLE_ENDIAN) != receiverIndex)
             {

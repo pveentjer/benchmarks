@@ -75,6 +75,7 @@ import static io.aeron.benchmarks.aeron.AeronUtil.dumpArchiveErrors;
 import static io.aeron.benchmarks.aeron.AeronUtil.dumpClusterErrors;
 import static io.aeron.benchmarks.aeron.AeronUtil.embeddedMediaDriver;
 import static io.aeron.benchmarks.aeron.AeronUtil.idleStrategy;
+import static io.aeron.benchmarks.aeron.AeronUtil.murmur3Checksum;
 import static io.aeron.benchmarks.aeron.AeronUtil.recordChannel;
 import static io.aeron.benchmarks.aeron.AeronUtil.recordStream;
 import static io.aeron.benchmarks.aeron.AeronUtil.replayChannel;
@@ -91,6 +92,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.agrona.IoUtil.mapNewFile;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -617,5 +619,23 @@ class AeronUtilTest
                 throw new IllegalArgumentException("Unable to find build.gradle");
             }
         }
+    }
+
+    @Test
+    void shouldDetectOutOfOrderHash ()
+    {
+        final long first = 0l;
+        final long second = 1l;
+        long firstSecondResult = 0l;
+        long secondFirstResult = 0l;
+
+        firstSecondResult = Long.rotateLeft(firstSecondResult, 1) ^ murmur3Checksum(first);
+        firstSecondResult = Long.rotateLeft(firstSecondResult, 1) ^ murmur3Checksum(second);
+
+        secondFirstResult = Long.rotateLeft(secondFirstResult, 1) ^ murmur3Checksum(second);
+        secondFirstResult = Long.rotateLeft(secondFirstResult, 1) ^ murmur3Checksum(first);
+
+        assertNotEquals(firstSecondResult, secondFirstResult);
+
     }
 }
