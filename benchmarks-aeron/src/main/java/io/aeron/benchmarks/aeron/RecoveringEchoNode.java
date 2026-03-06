@@ -392,9 +392,8 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
         private Subscription mergeSubscription;
         private ReplayMerge  replayMerge;
         private Image image;
-        private boolean live = true;
-
-        private long lostPosition;
+        private boolean live = false;
+        private long lostPosition = -1;
         private long recoveryStartNs;
         private long recoveryDeadlineNs      = Long.MAX_VALUE;
         private long recoveryArchiveFragments;
@@ -426,17 +425,13 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
             System.out.printf("  archive connected. recordingId=%d, replayChannelBase=%s, " +
                     "replayDestination=%s, liveDestination=%s%n",
                 recordingId, replayChannelBase, replayDestination, destinationChannel());
-
-            this.liveSubscription = aeron.addSubscription(destinationChannel(), destinationStreamId());
         }
 
         public void awaitConnected()
         {
-            AeronUtil.awaitConnected(
-                () -> liveSubscription.isConnected() && publication.availableWindow() > 0,
-                connectionTimeoutNs(),
-                SystemNanoClock.INSTANCE);
-            image = liveSubscription.imageAtIndex(0);
+            // Starting from recovery so all receivers have an image from position 0,
+            // allowing checksum verification — the same as {@link PersistentSubscriptionState}.
+            live = false;
         }
 
         public int poll()
@@ -509,8 +504,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
                     .build();
 
                 mergeSubscription = aeron.addSubscription(
-                    new ChannelUriStringBuilder()
-                        .media("udp")
+                    new ChannelUriStringBuilder(destinationChannel())
                         .controlMode("manual")
                         .sessionId(recordingSessionId)
                         .build(),
@@ -523,7 +517,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
                     replayDestination,
                     destinationChannel(),
                     recordingId,
-                    lostPosition);
+                    lostPosition == -1 ? 0 : lostPosition);
 
                 return 1;
             }
