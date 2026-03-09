@@ -164,9 +164,6 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
 
         fragmentHandler = (buffer, offset, length, header) ->
         {
-            final long messageId = buffer.getLong(offset + MESSAGE_ID_OFFSET, LITTLE_ENDIAN);
-            runningChecksum = Long.rotateLeft(runningChecksum, 1) ^ murmur3Checksum(messageId);
-
             if (buffer.getInt(offset + RECEIVER_INDEX_OFFSET, LITTLE_ENDIAN) != receiverIndex)
             {
                 return;
@@ -181,6 +178,9 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
             }
             bufferClaim.flags(header.flags()).putBytes(buffer, offset, length).commit();
             responsesSend++;
+
+            final long messageId = buffer.getLong(offset + MESSAGE_ID_OFFSET, LITTLE_ENDIAN);
+            runningChecksum = Long.rotateLeft(runningChecksum, 1) ^ murmur3Checksum(messageId);
 
             final long processingTimeNs = buffer.getLong(offset + PROCESSING_TIME_OFFSET, LITTLE_ENDIAN);
             if (processingTimeNs > 0)
@@ -276,7 +276,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
                     node.aeron.context().cncFile(),
                     outputDir.resolve(prefix + "aeron-stat.txt"),
                     outputDir.resolve(prefix + "errors.txt"));
-                final Path checksumFile = outputDir.resolve(prefix + "checksum.txt");
+                final Path checksumFile = outputDir.getParent().resolve(prefix + "checksum.txt");
                 try
                 {
                     Files.writeString(

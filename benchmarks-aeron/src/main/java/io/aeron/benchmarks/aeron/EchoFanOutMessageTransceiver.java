@@ -124,7 +124,7 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
         private long    nextStallNs      = Long.MAX_VALUE;
         private boolean stallPending     = false;
         private int     stallReceiver    = 0;
-        private long    runningChecksum = 0;
+        private final long[] runningChecksums;
 
         private final   Random messageIdRandom = new Random(MESSAGE_ID_SEED);
 
@@ -153,7 +153,7 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
                     this.targets[i] = Integer.parseInt(parts[i].trim());
                 }
             }
-
+            runningChecksums = new long[receiverCount];
             System.out.println("ControlStrategy:");
             System.out.println("  normalProcessingTimeNs: " + normalProcessingTimeNs);
             System.out.println("  intervalUs:             " + intervalNs / 1_000);
@@ -219,7 +219,8 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
             buffer.putLong(offset + TIMESTAMP_OFFSET, timestamp, LITTLE_ENDIAN);
             buffer.putInt(offset + RECEIVER_INDEX_OFFSET, receiver, LITTLE_ENDIAN);
             long messageId = messageIdRandom.nextLong();
-            runningChecksum = Long.rotateLeft(runningChecksum, 1) ^ murmur3Checksum(messageId);
+            long runningChecksum = runningChecksums[receiver];
+            runningChecksums[receiver] = Long.rotateLeft(runningChecksum, 1) ^ murmur3Checksum(messageId);
             buffer.putLong(offset + MESSAGE_ID_OFFSET, messageId, LITTLE_ENDIAN);
 
             if (stallPending && receiver == stallReceiver)
@@ -247,6 +248,7 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
     private final boolean ownsAeronClient;
 
     private Path logsDir;
+    private Path outputDir;
     private ExclusivePublication publication;
     private Subscription[] subscriptions;
     private FragmentHandler[] fragmentHandlers;
@@ -295,6 +297,7 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
     public void init(final Configuration configuration)
     {
         logsDir = configuration.logsDir();
+        outputDir = configuration.outputDirectory();
         final int messageLength = configuration.messageLength();
 
         if (messageLength < MIN_MESSAGE_LENGTH)
@@ -451,16 +454,19 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
             logsDir.resolve(prefix + "aeron-stat.txt"),
             logsDir.resolve(prefix + "errors.txt"));
 
-        final Path checksumFile = logsDir.resolve(prefix + "checksum.txt");
-        try
+        for(int i= 0; i< strategy.runningChecksums.length; i++)
         {
-            Files.writeString(
-                checksumFile,
-                String.format("0x%016X%n", this.strategy.runningChecksum));
-        }
-        catch (IOException e)
-        {
-            System.out.println("Failed to persist checksum file after run due to: " + e.getMessage());
+            try
+            {
+                final Path checksumFile = outputDir.resolve(String.format("%snode-%d-checksum.txt", prefix, i));
+                Files.writeString(
+                    checksumFile,
+                    String.format("0x%016X%n", this.strategy.runningChecksums[i]));
+            }
+            catch (IOException e)
+            {
+                System.out.println("Failed to persist checksum file after run due to: " + e.getMessage());
+            }
         }
 
         closeAll(aeronArchive);
