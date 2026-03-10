@@ -502,10 +502,13 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
                 final String replayChannel = new ChannelUriStringBuilder(replayChannelBase)
                     .sessionId(recordingSessionId)
                     .build();
-
+                // do not attempt to pass destinationChannel() directly to merge subscription c driver does not like it
+                final ChannelUriStringBuilder groupTagExtractor = new ChannelUriStringBuilder(destinationChannel());
                 mergeSubscription = aeron.addSubscription(
-                    new ChannelUriStringBuilder(destinationChannel())
+                    new ChannelUriStringBuilder()
+                        .media("udp")
                         .controlMode("manual")
+                        .groupTag(groupTagExtractor.groupTag())
                         .sessionId(recordingSessionId)
                         .build(),
                     destinationStreamId());
