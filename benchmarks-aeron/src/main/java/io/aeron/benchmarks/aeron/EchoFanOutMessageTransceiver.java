@@ -33,6 +33,8 @@ import io.aeron.benchmarks.Configuration;
 import io.aeron.benchmarks.MessageTransceiver;
 import io.aeron.benchmarks.PersistedHistogramSet;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -41,9 +43,12 @@ import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static org.agrona.BitUtil.SIZE_OF_LONG;
 import static org.agrona.CloseHelper.closeAll;
 import static io.aeron.benchmarks.aeron.AeronUtil.*;
+import java.util.Random;
+
 import static io.aeron.benchmarks.aeron.RecoveringEchoNode.ARCHIVE_CONTROL_CHANNEL_PROP;
 import static io.aeron.benchmarks.aeron.RecoveringEchoNode.ARCHIVE_CONTROL_RESPONSE_CHANNEL_PROP;
 import static io.aeron.benchmarks.aeron.RecoveringEchoNode.ARCHIVE_CONTROL_STREAM_PROP;
+import static io.aeron.benchmarks.aeron.RecoveringEchoNode.MESSAGE_ID_OFFSET;
 import static io.aeron.benchmarks.aeron.RecoveringEchoNode.PROCESSING_TIME_OFFSET;
 
 /**
@@ -67,12 +72,14 @@ import static io.aeron.benchmarks.aeron.RecoveringEchoNode.PROCESSING_TIME_OFFSE
  *   [TIMESTAMP_OFFSET..+7]         timestamp (long, little-endian)
  *   [RECEIVER_INDEX_OFFSET..+3]    receiver index (int, little-endian)
  *   [PROCESSING_TIME_OFFSET..+7]   processing time (long, nanoseconds, little-endian)
+ *   [MESSAGE_ID_OFFSET..+7]        random message id (long, little-endian) — unique per message,
+ *                                  same across all receivers for the same logical send
  *   [messageLength-8..end]         checksum (long, little-endian)
  * </pre>
  */
 public final class EchoFanOutMessageTransceiver extends MessageTransceiver
 {
-    static final int MIN_MESSAGE_LENGTH = PROCESSING_TIME_OFFSET + SIZE_OF_LONG + SIZE_OF_LONG;
+    static final int MIN_MESSAGE_LENGTH = MESSAGE_ID_OFFSET + SIZE_OF_LONG + SIZE_OF_LONG;
 
     // -------------------------------------------------------------------------
     // ControlStrategy
@@ -102,6 +109,9 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
         static final String INTERVAL_US_PROP        = "recovering.echo.control.interval.us";
         static final String STALL_NS_PROP           = "recovering.echo.control.stall.ns";
         static final String TARGETS_PROP            = "recovering.echo.control.targets";
+        /** Fixed seed so every run produces the same messageId sequence */
+        static final long MESSAGE_ID_SEED = 0xDEADBEEFCAFEBABEL;
+
 
         private final long  normalProcessingTimeNs;
         private final long  intervalNs;
@@ -114,6 +124,9 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
         private long    nextStallNs      = Long.MAX_VALUE;
         private boolean stallPending     = false;
         private int     stallReceiver    = 0;
+        private final long[] runningChecksums;
+
+        private final   Random messageIdRandom = new Random(MESSAGE_ID_SEED);
 
         ControlStrategy(final int receiverCount)
         {
@@ -140,7 +153,7 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
                     this.targets[i] = Integer.parseInt(parts[i].trim());
                 }
             }
-
+            runningChecksums = new long[receiverCount];
             System.out.println("ControlStrategy:");
             System.out.println("  normalProcessingTimeNs: " + normalProcessingTimeNs);
             System.out.println("  intervalUs:             " + intervalNs / 1_000);
@@ -167,6 +180,7 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
             targetRoundRobin = 0;
             nextStallNs      = nowNs + intervalNs;
             stallPending     = false;
+            messageIdRandom.setSeed(MESSAGE_ID_SEED);
         }
 
         /**
@@ -204,6 +218,10 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
         {
             buffer.putLong(offset + TIMESTAMP_OFFSET, timestamp, LITTLE_ENDIAN);
             buffer.putInt(offset + RECEIVER_INDEX_OFFSET, receiver, LITTLE_ENDIAN);
+            long messageId = messageIdRandom.nextLong();
+            long runningChecksum = runningChecksums[receiver];
+            runningChecksums[receiver] = Long.rotateLeft(runningChecksum, 1) ^ murmur3Checksum(messageId);
+            buffer.putLong(offset + MESSAGE_ID_OFFSET, messageId, LITTLE_ENDIAN);
 
             if (stallPending && receiver == stallReceiver)
             {
@@ -230,6 +248,7 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
     private final boolean ownsAeronClient;
 
     private Path logsDir;
+    private Path outputDir;
     private ExclusivePublication publication;
     private Subscription[] subscriptions;
     private FragmentHandler[] fragmentHandlers;
@@ -278,6 +297,7 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
     public void init(final Configuration configuration)
     {
         logsDir = configuration.logsDir();
+        outputDir = configuration.outputDirectory();
         final int messageLength = configuration.messageLength();
 
         if (messageLength < MIN_MESSAGE_LENGTH)
@@ -433,6 +453,21 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
             aeron.context().cncFile(),
             logsDir.resolve(prefix + "aeron-stat.txt"),
             logsDir.resolve(prefix + "errors.txt"));
+
+        for(int i= 0; i< strategy.runningChecksums.length; i++)
+        {
+            try
+            {
+                final Path checksumFile = outputDir.resolve(String.format("%snode-%d-checksum.txt", prefix, i));
+                Files.writeString(
+                    checksumFile,
+                    String.format("0x%016X%n", this.strategy.runningChecksums[i]));
+            }
+            catch (IOException e)
+            {
+                System.out.println("Failed to persist checksum file after run due to: " + e.getMessage());
+            }
+        }
 
         closeAll(aeronArchive);
         closeAll(subscriptions);

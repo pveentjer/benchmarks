@@ -33,6 +33,8 @@ import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.ShutdownSignalBarrier;
 import org.agrona.concurrent.SystemNanoClock;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -49,6 +51,7 @@ import static io.aeron.benchmarks.aeron.AeronUtil.destinationChannel;
 import static io.aeron.benchmarks.aeron.AeronUtil.destinationStreamId;
 import static io.aeron.benchmarks.aeron.AeronUtil.idleStrategy;
 import static io.aeron.benchmarks.aeron.AeronUtil.launchEmbeddedMediaDriverIfConfigured;
+import static io.aeron.benchmarks.aeron.AeronUtil.murmur3Checksum;
 import static io.aeron.benchmarks.aeron.AeronUtil.receiverIndex;
 import static io.aeron.benchmarks.aeron.AeronUtil.sourceChannel;
 import static io.aeron.benchmarks.aeron.AeronUtil.sourceStreamId;
@@ -72,6 +75,7 @@ import static org.agrona.PropertyAction.REPLACE;
  *   [TIMESTAMP_OFFSET..+7]           timestamp (long, little-endian)
  *   [RECEIVER_INDEX_OFFSET..+3]      receiver index (int, little-endian)
  *   [PROCESSING_TIME_OFFSET..+7]     processing time (long, nanoseconds, little-endian)
+ *   [MESSAGE_ID_OFFSET..+7]          random message id (long, little-endian) — unique per message,
  *   [messageLength-8..end]           checksum (long, little-endian)
  * </pre>
  * <p>
@@ -95,9 +99,8 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
      * Immediately follows the receiver index int field.
      */
     static final int PROCESSING_TIME_OFFSET = RECEIVER_INDEX_OFFSET + SIZE_OF_INT;
+    static final int MESSAGE_ID_OFFSET      = PROCESSING_TIME_OFFSET + SIZE_OF_LONG;
 
-    // -------------------------------------------------------------------------
-    // Node fields
     // -------------------------------------------------------------------------
 
     private final BufferClaim bufferClaim = new BufferClaim();
@@ -115,6 +118,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
 
     private long requestReceived = 0;
     private long responsesSend   = 0;
+    private long runningChecksum = 0;
 
     // -------------------------------------------------------------------------
     // Constructor
@@ -174,6 +178,9 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
             }
             bufferClaim.flags(header.flags()).putBytes(buffer, offset, length).commit();
             responsesSend++;
+
+            final long messageId = buffer.getLong(offset + MESSAGE_ID_OFFSET, LITTLE_ENDIAN);
+            runningChecksum = Long.rotateLeft(runningChecksum, 1) ^ murmur3Checksum(messageId);
 
             final long processingTimeNs = buffer.getLong(offset + PROCESSING_TIME_OFFSET, LITTLE_ENDIAN);
             if (processingTimeNs > 0)
@@ -262,12 +269,24 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
             {
                 System.out.println("Requests received: " + node.requestReceived);
                 System.out.println("Responses send: "    + node.responsesSend);
+                System.out.printf ("Running checksum:  0x%016X%n", node.runningChecksum);
 
                 final String prefix = "echo-node-" + receiverIndex + "-";
                 AeronUtil.dumpAeronStats(
                     node.aeron.context().cncFile(),
                     outputDir.resolve(prefix + "aeron-stat.txt"),
                     outputDir.resolve(prefix + "errors.txt"));
+                final Path checksumFile = outputDir.getParent().resolve(prefix + "checksum.txt");
+                try
+                {
+                    Files.writeString(
+                        checksumFile,
+                        String.format("0x%016X%n", node.runningChecksum));
+                }
+                catch (IOException e)
+                {
+                    System.out.println("Failed to persist checksum file after run due to: " + e.getMessage());
+                }
             }
         }
     }
@@ -373,9 +392,8 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
         private Subscription mergeSubscription;
         private ReplayMerge  replayMerge;
         private Image image;
-        private boolean live = true;
-
-        private long lostPosition;
+        private boolean live = false;
+        private long lostPosition = -1;
         private long recoveryStartNs;
         private long recoveryDeadlineNs      = Long.MAX_VALUE;
         private long recoveryArchiveFragments;
@@ -407,17 +425,13 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
             System.out.printf("  archive connected. recordingId=%d, replayChannelBase=%s, " +
                     "replayDestination=%s, liveDestination=%s%n",
                 recordingId, replayChannelBase, replayDestination, destinationChannel());
-
-            this.liveSubscription = aeron.addSubscription(destinationChannel(), destinationStreamId());
         }
 
         public void awaitConnected()
         {
-            AeronUtil.awaitConnected(
-                () -> liveSubscription.isConnected() && publication.availableWindow() > 0,
-                connectionTimeoutNs(),
-                SystemNanoClock.INSTANCE);
-            image = liveSubscription.imageAtIndex(0);
+            // Starting from recovery so all receivers have an image from position 0,
+            // allowing checksum verification — the same as {@link PersistentSubscriptionState}.
+            live = false;
         }
 
         public int poll()
@@ -490,8 +504,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
                     .build();
 
                 mergeSubscription = aeron.addSubscription(
-                    new ChannelUriStringBuilder()
-                        .media("udp")
+                    new ChannelUriStringBuilder(destinationChannel())
                         .controlMode("manual")
                         .sessionId(recordingSessionId)
                         .build(),
@@ -504,7 +517,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
                     replayDestination,
                     destinationChannel(),
                     recordingId,
-                    lostPosition);
+                    lostPosition == -1 ? 0 : lostPosition);
 
                 return 1;
             }

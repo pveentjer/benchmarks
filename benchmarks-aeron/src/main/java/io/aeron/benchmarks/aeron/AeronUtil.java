@@ -669,4 +669,31 @@ public final class AeronUtil
         }
         return location;
     }
+    // Murmur3 64-bit finalisation mix constants
+    private static final long MIX_CONSTANT_1 = 0xff51afd7ed558ccdL;
+    private static final long MIX_CONSTANT_2 = 0xc4ceb9fe1a85ec53L;
+
+    /**
+     * Derives a 64-bit checksum from a message id using the Murmur3 finalisation mix.
+     * <p>
+     * The Murmur3 finalisation mix (also known as an "avalanche" or "fmix64") is a sequence of
+     * XOR-shift and multiply operations designed to achieve strong bit diffusion: every input bit
+     * influences every output bit.
+     * *
+     * @param toBeHashed  long whose checksum is to be derived
+     * @return a deterministic 64-bit hash of {@code toBeHashed} suitable for use as a checksum
+     */
+
+    static long murmur3Checksum(final long toBeHashed )
+    {
+        long hash = toBeHashed;
+
+        hash ^= hash >>> 33;
+        hash *= MIX_CONSTANT_1;
+        hash ^= hash >>> 33;
+        hash *= MIX_CONSTANT_2;
+        hash ^= hash >>> 33;
+
+        return hash;
+    }
 }
