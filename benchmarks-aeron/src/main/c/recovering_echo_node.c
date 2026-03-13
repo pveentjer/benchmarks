@@ -24,6 +24,7 @@
 #include <sched.h>
 
 #include "aeronc.h"
+#include "aeron_agent.h"
 #include "aeron_archive.h"
 #include "uri/aeron_uri_string_builder.h"
 
@@ -52,6 +53,24 @@
 #define PROPERTIES_MAX_KEY              512
 #define PROPERTIES_MAX_VALUE            2048
 #define PROPERTIES_MAX_ENTRIES          256
+
+/* ============================================================
+ * Murmur3 64-bit finalisation mix (fmix64)
+ * Must match AeronUtil.murmur3Checksum in the Java implementation.
+ * ============================================================ */
+
+#define MIX_CONSTANT_1  UINT64_C(0xff51afd7ed558ccd)
+#define MIX_CONSTANT_2  UINT64_C(0xc4ceb9fe1a85ec53)
+
+static inline uint64_t murmur3_checksum(uint64_t h)
+{
+    h ^= h >> 33;
+    h *= MIX_CONSTANT_1;
+    h ^= h >> 33;
+    h *= MIX_CONSTANT_2;
+    h ^= h >> 33;
+    return h;
+}
 
 /* ============================================================
  * Simple properties loader
@@ -235,6 +254,9 @@ typedef struct
     aeron_exclusive_publication_t *publication;
     int32_t receiver_index;
     volatile bool *running;
+    int64_t requests_received;
+    int64_t responses_sent;
+    uint64_t running_checksum;
 } echo_context_t;
 
 static void on_fragment(void *clientd, const uint8_t *buffer, size_t length, aeron_header_t *header)
@@ -245,6 +267,8 @@ static void on_fragment(void *clientd, const uint8_t *buffer, size_t length, aer
     {
         return;
     }
+
+    ctx->requests_received++;
 
     aeron_buffer_claim_t claim;
     int64_t result;
@@ -270,6 +294,12 @@ static void on_fragment(void *clientd, const uint8_t *buffer, size_t length, aer
     claim.frame_header[FRAME_HEADER_FLAGS_OFFSET] = hv.frame.flags;
 
     aeron_buffer_claim_commit(&claim);
+
+    ctx->responses_sent++;
+
+    const int64_t message_id = read_int64_le(buffer, MESSAGE_ID_OFFSET);
+    ctx->running_checksum = ((ctx->running_checksum << 1) | (ctx->running_checksum >> 63))
+                            ^ murmur3_checksum((uint64_t)message_id);
 
     const int64_t processing_time_ns = read_int64_le(buffer, PROCESSING_TIME_OFFSET);
     if (processing_time_ns > 0)
@@ -922,9 +952,12 @@ int main(int argc, char **argv)
 
     /* --- echo context --- */
     echo_context_t echo_ctx = {
-        .publication    = publication,
-        .receiver_index = receiver_index,
-        .running        = &g_running,
+        .publication      = publication,
+        .receiver_index   = receiver_index,
+        .running          = &g_running,
+        .requests_received = 0,
+        .responses_sent   = 0,
+        .running_checksum = 0,
     };
 
     /* --- echo state --- */
@@ -960,6 +993,21 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    /* --- idle strategy --- */
+    const char *idle_strategy_name =
+        properties_get(&props, "io.aeron.benchmarks.aeron.idle.strategy", "spin");
+
+    aeron_idle_strategy_func_t idle_func = NULL;
+    void *idle_state = NULL;
+
+    idle_func = aeron_idle_strategy_load(idle_strategy_name, &idle_state, NULL, NULL);
+    if (!idle_func)
+    {
+        fprintf(stderr, "Failed to load idle strategy '%s': %s\n", idle_strategy_name, aeron_errmsg());
+        return 1;
+    }
+    printf("  idle strategy: %s\n", idle_strategy_name);
+
     printf("  state created. Waiting for connection...\n");
     echo_state->await_connected(echo_state);
     printf("RecoveringEchoNode ready\n");
@@ -968,11 +1016,13 @@ int main(int argc, char **argv)
     while (g_running)
     {
         const int work = echo_state->poll(echo_state);
-        if (work == 0)
-        {
-            sched_yield();
-        }
+        idle_func(idle_state, work);
     }
+
+    /* --- print counters and checksum --- */
+    printf("Requests received: %" PRId64 "\n", echo_ctx.requests_received);
+    printf("Responses sent:    %" PRId64 "\n", echo_ctx.responses_sent);
+    printf("Running checksum:  0x%016" PRIX64 "\n", echo_ctx.running_checksum);
 
     /* --- cleanup --- */
     echo_state->close(echo_state);
