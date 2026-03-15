@@ -26,26 +26,15 @@
 #include "aeronc.h"
 #include "aeron_agent.h"
 #include "aeron_archive.h"
+#include "aeron_archive_persistent_subscription.h"
 #include "uri/aeron_uri_string_builder.h"
-
-/* ============================================================
- * Wire layout offsets — must match Java AeronUtil / RecoveringEchoNode
- * ============================================================ */
 
 #define TIMESTAMP_OFFSET        0
 #define RECEIVER_INDEX_OFFSET   (TIMESTAMP_OFFSET + 8)
 #define PROCESSING_TIME_OFFSET  (RECEIVER_INDEX_OFFSET + 4)
 #define MESSAGE_ID_OFFSET       (PROCESSING_TIME_OFFSET + 8)
 
-/*
- * Offset of the flags byte within the aeron_buffer_claim_t.frame_header buffer.
- * Layout: frame_length(4) + version(1) + flags(1) + type(2) + ...
- */
 #define FRAME_HEADER_FLAGS_OFFSET  5
-
-/* ============================================================
- * Configuration constants
- * ============================================================ */
 
 #define FRAGMENT_LIMIT_DEFAULT          10
 #define CONNECTION_TIMEOUT_NS_DEFAULT   (60LL * 1000000000LL)
@@ -53,11 +42,6 @@
 #define PROPERTIES_MAX_KEY              512
 #define PROPERTIES_MAX_VALUE            2048
 #define PROPERTIES_MAX_ENTRIES          256
-
-/* ============================================================
- * Murmur3 64-bit finalisation mix (fmix64)
- * Must match AeronUtil.murmur3Checksum in the Java implementation.
- * ============================================================ */
 
 #define MIX_CONSTANT_1  UINT64_C(0xff51afd7ed558ccd)
 #define MIX_CONSTANT_2  UINT64_C(0xc4ceb9fe1a85ec53)
@@ -71,10 +55,6 @@ static inline uint64_t murmur3_checksum(uint64_t h)
     h ^= h >> 33;
     return h;
 }
-
-/* ============================================================
- * Simple properties loader
- * ============================================================ */
 
 typedef struct
 {
@@ -143,7 +123,6 @@ static int properties_load(properties_t *props, const char *filename)
 
 static void properties_merge(properties_t *dst, const properties_t *src)
 {
-    /* Later files override earlier ones — matching keys are updated */
     for (int j = 0; j < src->count; j++)
     {
         bool found = false;
@@ -187,10 +166,6 @@ static int32_t properties_get_int32(const properties_t *props, const char *key, 
     return v ? (int32_t)strtol(v, NULL, 10) : default_value;
 }
 
-/* ============================================================
- * Little-endian read helpers
- * ============================================================ */
-
 static inline int32_t read_int32_le(const uint8_t *buf, size_t offset)
 {
     return (int32_t)(
@@ -212,10 +187,6 @@ static inline int64_t read_int64_le(const uint8_t *buf, size_t offset)
         ((uint64_t)buf[offset + 6] << 48) |
         ((uint64_t)buf[offset + 7] << 56));
 }
-
-/* ============================================================
- * Subscription helper (synchronous poll loop)
- * ============================================================ */
 
 static aeron_subscription_t *add_subscription(
     aeron_t *aeron,
@@ -244,10 +215,6 @@ static aeron_subscription_t *add_subscription(
 
     return sub;
 }
-
-/* ============================================================
- * Fragment handler
- * ============================================================ */
 
 typedef struct
 {
@@ -284,7 +251,6 @@ static void on_fragment(void *clientd, const uint8_t *buffer, size_t length, aer
         {
             return;
         }
-        /* back-pressured or admin action — spin */
     }
 
     aeron_header_values_t hv;
@@ -312,9 +278,12 @@ static void on_fragment(void *clientd, const uint8_t *buffer, size_t length, aer
     }
 }
 
-/* ============================================================
- * EchoState vtable
- * ============================================================ */
+static aeron_controlled_fragment_handler_action_t on_fragment_controlled(
+    void *clientd, const uint8_t *buffer, size_t length, aeron_header_t *header)
+{
+    on_fragment(clientd, buffer, length, header);
+    return AERON_ACTION_CONTINUE;
+}
 
 typedef struct echo_state_stct echo_state_t;
 
@@ -324,13 +293,6 @@ struct echo_state_stct
     int  (*poll)(echo_state_t *state);
     void (*close)(echo_state_t *state);
 };
-
-/* ============================================================
- * GapState
- *
- * Normal operation: poll live subscription image.
- * On image close: resubscribe and wait for a new image.
- * ============================================================ */
 
 typedef struct
 {
@@ -448,10 +410,6 @@ static gap_state_t *gap_state_create(
     return s;
 }
 
-/* ============================================================
- * Recording descriptor consumer — file scope to avoid nested fn
- * ============================================================ */
-
 typedef struct
 {
     int32_t session_id;
@@ -467,13 +425,6 @@ static void recording_descriptor_consumer(
     h->count++;
 }
 
-/* ============================================================
- * ReplayMergeState
- *
- * Normal operation: poll live image.
- * On image close: trigger recovery via replay-merge.
- * ============================================================ */
-
 typedef struct
 {
     echo_state_t base;
@@ -482,12 +433,10 @@ typedef struct
     echo_context_t *echo_ctx;
     aeron_archive_t *aeron_archive;
 
-    /* live */
     aeron_subscription_t *live_subscription;
     aeron_image_t *image;
     bool live;
 
-    /* recovery */
     aeron_subscription_t *merge_subscription;
     aeron_archive_replay_merge_t *replay_merge;
     int64_t lost_position;
@@ -498,21 +447,16 @@ typedef struct
     int64_t recovery_live_fragments;
     bool recovery_in_archive_phase;
 
-    /* config (point into properties_t storage — caller must keep alive) */
-    const char *live_channel;      /* destination_channel — the multicast/MDC channel */
+    const char *live_channel;
     int32_t live_stream_id;
-    const char *replay_channel;    /* recovering.echo.replay.channel */
-    const char *replay_destination;/* recovering.echo.replay.destination */
+    const char *replay_channel;
+    const char *replay_destination;
     int64_t recording_id;
     int64_t connection_timeout_ns;
 } replay_merge_state_t;
 
 static void replay_merge_await_connected(echo_state_t *base)
 {
-    /* For REPLAY_MERGE we start in recovery so every subscriber replays
-     * from position 0, giving checksums a chance to verify the full history.
-     * await_connected is therefore a no-op: the live flag starts false and
-     * recovery is triggered lazily on the first poll. */
     (void)base;
 }
 
@@ -532,7 +476,6 @@ static int replay_merge_do_live(replay_merge_state_t *s)
 
 static int replay_merge_do_recovery(replay_merge_state_t *s)
 {
-    /* timeout guard */
     if (s->replay_merge && aeron_nano_clock() > s->recovery_deadline_ns)
     {
         fprintf(stderr,
@@ -551,9 +494,6 @@ static int replay_merge_do_recovery(replay_merge_state_t *s)
 
     if (!s->replay_merge)
     {
-        /* --- start a new recovery attempt --- */
-
-        /* check that archive has data beyond our lost position */
         int64_t archive_position;
         if (aeron_archive_get_recording_position(&archive_position, s->aeron_archive, s->recording_id) < 0)
         {
@@ -565,7 +505,6 @@ static int replay_merge_do_recovery(replay_merge_state_t *s)
 
         if (archive_position <= start_position)
         {
-            /* nothing in the archive yet; wait */
             return 0;
         }
 
@@ -576,7 +515,6 @@ static int replay_merge_do_recovery(replay_merge_state_t *s)
         s->recovery_live_fragments    = 0;
         s->recovery_in_archive_phase  = true;
 
-        /* look up session id for the recording */
         recording_session_holder_t holder = { 0, 0 };
         int32_t found_count = 0;
         if (aeron_archive_list_recording(
@@ -592,8 +530,6 @@ static int replay_merge_do_recovery(replay_merge_state_t *s)
 
         const int32_t recording_session_id = holder.session_id;
 
-        /* build replay channel — add session-id so the merge subscription can
-         * match the right session even before the live stream appears */
         aeron_uri_string_builder_t rb;
         aeron_uri_string_builder_init_on_string(&rb, s->replay_channel);
         aeron_uri_string_builder_put_int32(&rb, AERON_URI_SESSION_ID_KEY, recording_session_id);
@@ -601,8 +537,6 @@ static int replay_merge_do_recovery(replay_merge_state_t *s)
         aeron_uri_string_builder_sprint(&rb, resolved_replay_channel, sizeof(resolved_replay_channel));
         aeron_uri_string_builder_close(&rb);
 
-        /* build merge subscription channel — manual control-mode + session-id +
-         * group tag from the live channel so tagged flow-control still works */
         aeron_uri_string_builder_t lb;
         aeron_uri_string_builder_init_on_string(&lb, s->live_channel);
         const char *gtag = aeron_uri_string_builder_get(&lb, AERON_URI_GTAG_KEY);
@@ -636,7 +570,7 @@ static int replay_merge_do_recovery(replay_merge_state_t *s)
                 s->aeron_archive,
                 resolved_replay_channel,
                 s->replay_destination,
-                s->live_channel,      /* live_destination */
+                s->live_channel,
                 s->recording_id,
                 start_position,
                 (long long)aeron_epoch_clock(),
@@ -821,9 +755,153 @@ static replay_merge_state_t *replay_merge_state_create(
     return s;
 }
 
-/* ============================================================
- * Signal handling
- * ============================================================ */
+typedef struct
+{
+    echo_state_t base;
+    aeron_archive_persistent_subscription_t *persistent_subscription;
+    aeron_archive_persistent_subscription_context_t *ps_ctx;
+    aeron_archive_context_t *archive_ctx;
+    echo_context_t *echo_ctx;
+} persistent_subscription_state_t;
+
+static void persistent_subscription_await_connected(echo_state_t *base)
+{
+    (void)base;
+}
+
+static int persistent_subscription_poll(echo_state_t *base)
+{
+    persistent_subscription_state_t *s = (persistent_subscription_state_t *)base;
+
+    static int64_t poll_count = 0;
+    if (++poll_count == 1 || poll_count % 10000000 == 0)
+    {
+        printf("persistent_subscription_poll: count=%" PRId64 "\n", poll_count);
+        fflush(stdout);
+    }
+
+    return aeron_archive_persistent_subscription_controlled_poll(
+        s->persistent_subscription,
+        on_fragment_controlled,
+        s->echo_ctx,
+        FRAGMENT_LIMIT_DEFAULT);
+}
+
+static void persistent_subscription_close(echo_state_t *base)
+{
+    persistent_subscription_state_t *s = (persistent_subscription_state_t *)base;
+    if (s->persistent_subscription)
+    {
+        aeron_archive_persistent_subscription_close(s->persistent_subscription);
+        s->persistent_subscription = NULL;
+    }
+    if (s->ps_ctx)
+    {
+        aeron_archive_persistent_subscription_context_close(s->ps_ctx);
+        s->ps_ctx = NULL;
+    }
+    if (s->archive_ctx)
+    {
+        aeron_archive_context_close(s->archive_ctx);
+        s->archive_ctx = NULL;
+    }
+}
+
+static persistent_subscription_state_t *persistent_subscription_state_create(
+    aeron_t *aeron,
+    echo_context_t *echo_ctx,
+    const properties_t *props,
+    const char *live_channel,
+    int32_t live_stream_id)
+{
+    persistent_subscription_state_t *s = calloc(1, sizeof(persistent_subscription_state_t));
+    if (!s)
+    {
+        return NULL;
+    }
+
+    s->base.await_connected = persistent_subscription_await_connected;
+    s->base.poll            = persistent_subscription_poll;
+    s->base.close           = persistent_subscription_close;
+    s->echo_ctx             = echo_ctx;
+    s->ps_ctx               = NULL;
+    s->archive_ctx          = NULL;
+
+    const char *control_channel  = properties_get(props, "recovering.echo.archive.control.channel", NULL);
+    const char *control_response = properties_get(props, "recovering.echo.archive.control.response.channel", NULL);
+    int32_t     control_stream   = properties_get_int32(props, "recovering.echo.archive.control.stream", 0);
+    int64_t     recording_id     = properties_get_int64(props, "recovering.echo.recording.id", 0);
+    const char *replay_channel   = properties_get(props, "recovering.echo.replay.channel", NULL);
+    int32_t     replay_stream_id = properties_get_int32(props, "recovering.echo.replay.stream", -5);
+
+    if (!control_channel || !control_response)
+    {
+        fprintf(stderr, "Missing archive control channel or response channel\n");
+        free(s);
+        return NULL;
+    }
+
+    if (!replay_channel)
+    {
+        fprintf(stderr, "Missing recovering.echo.replay.channel\n");
+        free(s);
+        return NULL;
+    }
+
+    printf("PersistentSubscriptionState: connecting to archive"
+           " controlChannel=%s, controlStream=%d, responseChannel=%s\n",
+        control_channel, control_stream, control_response);
+
+    aeron_archive_context_t *archive_ctx = NULL;
+    if (aeron_archive_context_init(&archive_ctx) < 0)
+    {
+        fprintf(stderr, "aeron_archive_context_init failed: %s\n", aeron_errmsg());
+        free(s);
+        return NULL;
+    }
+
+    aeron_archive_context_set_control_request_channel(archive_ctx, control_channel);
+    aeron_archive_context_set_control_request_stream_id(archive_ctx, control_stream);
+    aeron_archive_context_set_control_response_channel(archive_ctx, control_response);
+
+    aeron_archive_persistent_subscription_context_t *ps_ctx = NULL;
+    if (aeron_archive_persistent_subscription_context_init(&ps_ctx) < 0)
+    {
+        fprintf(stderr, "aeron_archive_persistent_subscription_context_init failed: %s\n", aeron_errmsg());
+        aeron_archive_context_close(archive_ctx);
+        free(s);
+        return NULL;
+    }
+
+    aeron_archive_persistent_subscription_context_set_aeron(ps_ctx, aeron);
+    aeron_archive_persistent_subscription_context_set_archive_context(ps_ctx, archive_ctx);
+    aeron_archive_persistent_subscription_context_set_recording_id(ps_ctx, recording_id);
+    aeron_archive_persistent_subscription_context_set_live_channel(ps_ctx, live_channel);
+    aeron_archive_persistent_subscription_context_set_live_stream_id(ps_ctx, live_stream_id);
+    aeron_archive_persistent_subscription_context_set_replay_channel(ps_ctx, replay_channel);
+    aeron_archive_persistent_subscription_context_set_replay_stream_id(ps_ctx, replay_stream_id);
+    aeron_archive_persistent_subscription_context_set_start_position(ps_ctx, AERON_PERSISTENT_SUBSCRIPTION_FROM_START);
+
+    if (aeron_archive_persistent_subscription_create(&s->persistent_subscription, ps_ctx) < 0)
+    {
+        fprintf(stderr, "aeron_archive_persistent_subscription_create failed: %s\n", aeron_errmsg());
+        aeron_archive_persistent_subscription_context_close(ps_ctx);
+        aeron_archive_context_close(archive_ctx);
+        free(s);
+        return NULL;
+    }
+
+    s->ps_ctx      = ps_ctx;
+    s->archive_ctx = archive_ctx;
+
+    printf("  PersistentSubscription created."
+           " recordingId=%" PRId64
+           ", liveChannel=%s, liveStreamId=%d"
+           ", replayChannel=%s, replayStreamId=%d\n",
+        recording_id, live_channel, live_stream_id, replay_channel, replay_stream_id);
+
+    return s;
+}
 
 static volatile bool g_running = true;
 
@@ -833,10 +911,6 @@ static void signal_handler(int signum)
     g_running = false;
 }
 
-/* ============================================================
- * main
- * ============================================================ */
-
 int main(int argc, char **argv)
 {
     if (argc < 2)
@@ -845,7 +919,6 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    /* load and merge all property files; later files override earlier ones */
     properties_t props;
     memset(&props, 0, sizeof(props));
 
@@ -886,7 +959,6 @@ int main(int argc, char **argv)
     signal(SIGINT,  signal_handler);
     signal(SIGTERM, signal_handler);
 
-    /* --- aeron client --- */
     aeron_context_t *aeron_ctx = NULL;
     if (aeron_context_init(&aeron_ctx) < 0)
     {
@@ -907,7 +979,6 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    /* --- exclusive publication --- */
     aeron_async_add_exclusive_publication_t *async_pub = NULL;
     if (aeron_async_add_exclusive_publication(&async_pub, aeron, source_channel, source_stream_id) < 0)
     {
@@ -934,7 +1005,6 @@ int main(int argc, char **argv)
         printf("  publication created: sessionId=%d\n", c.session_id);
     }
 
-    /* await publication connected before advertising ourselves */
     printf("  awaiting publication connected...\n");
     {
         const int64_t deadline_ns = aeron_nano_clock() + connection_timeout_ns;
@@ -950,7 +1020,6 @@ int main(int argc, char **argv)
     }
     printf("  publication connected\n");
 
-    /* --- echo context --- */
     echo_context_t echo_ctx = {
         .publication      = publication,
         .receiver_index   = receiver_index,
@@ -960,7 +1029,6 @@ int main(int argc, char **argv)
         .running_checksum = 0,
     };
 
-    /* --- echo state --- */
     echo_state_t *echo_state = NULL;
 
     if (strcmp(recovery_mode, "GAP") == 0)
@@ -987,13 +1055,23 @@ int main(int argc, char **argv)
         }
         echo_state = &rms->base;
     }
+    else if (strcmp(recovery_mode, "PERSISTENT_SUBSCRIPTION") == 0)
+    {
+        persistent_subscription_state_t *pss = persistent_subscription_state_create(
+            aeron, &echo_ctx, &props,
+            destination_channel, destination_stream_id);
+        if (!pss)
+        {
+            return 1;
+        }
+        echo_state = &pss->base;
+    }
     else
     {
         fprintf(stderr, "Unknown recovery mode: %s\n", recovery_mode);
         return 1;
     }
 
-    /* --- idle strategy --- */
     const char *idle_strategy_name =
         properties_get(&props, "io.aeron.benchmarks.aeron.idle.strategy", "spin");
 
@@ -1012,19 +1090,24 @@ int main(int argc, char **argv)
     echo_state->await_connected(echo_state);
     printf("RecoveringEchoNode ready\n");
 
-    /* --- run loop --- */
+    const int64_t loop_start_ns = aeron_nano_clock();
+    int64_t iterations = 0;
+
     while (g_running)
     {
         const int work = echo_state->poll(echo_state);
         idle_func(idle_state, work);
+        iterations++;
     }
 
-    /* --- print counters and checksum --- */
+    const int64_t loop_end_ns = aeron_nano_clock();
+    printf("Loop ran for %.3f ms, iterations=%" PRId64 "\n",
+        (double)(loop_end_ns - loop_start_ns) / 1000000.0, iterations);
+
     printf("Requests received: %" PRId64 "\n", echo_ctx.requests_received);
     printf("Responses sent:    %" PRId64 "\n", echo_ctx.responses_sent);
     printf("Running checksum:  0x%016" PRIX64 "\n", echo_ctx.running_checksum);
 
-    /* --- cleanup --- */
     echo_state->close(echo_state);
     free(echo_state);
 
