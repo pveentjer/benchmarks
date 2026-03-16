@@ -48,7 +48,8 @@ import static io.aeron.benchmarks.PropertiesUtil.mergeWithSystemProperties;
 public final class LoadTestRig
 {
     private static final long NANOS_PER_SECOND = SECONDS.toNanos(1);
-    private static final long RECEIVE_DEADLINE_NS = SECONDS.toNanos(60);
+    // todo: revert this to 60
+    private static final long RECEIVE_DEADLINE_NS = SECONDS.toNanos(30);
     private final Configuration configuration;
     private final MessageTransceiver messageTransceiver;
     private final PrintStream out;
