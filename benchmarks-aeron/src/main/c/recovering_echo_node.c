@@ -773,12 +773,12 @@ static int persistent_subscription_poll(echo_state_t *base)
 {
     persistent_subscription_state_t *s = (persistent_subscription_state_t *)base;
 
-    static int64_t poll_count = 0;
-    if (++poll_count == 1 || poll_count % 10000000 == 0)
-    {
-        printf("persistent_subscription_poll: count=%" PRId64 "\n", poll_count);
-        fflush(stdout);
-    }
+//    static int64_t poll_count = 0;
+//    if (++poll_count == 1 || poll_count % 10000000 == 0)
+//    {
+//        printf("persistent_subscription_poll: count=%" PRId64 "\n", poll_count);
+//        fflush(stdout);
+//    }
 
     return aeron_archive_persistent_subscription_controlled_poll(
         s->persistent_subscription,
