@@ -16,12 +16,11 @@
 package io.aeron.benchmarks.aeron;
 
 import io.aeron.Aeron;
+import io.aeron.ChannelUriStringBuilder;
 import io.aeron.ExclusivePublication;
 import io.aeron.Image;
 import io.aeron.Subscription;
-import io.aeron.ChannelUriStringBuilder;
 import io.aeron.archive.client.AeronArchive;
-import io.aeron.archive.client.PersistentSubscriptionListener;
 import io.aeron.archive.client.PersistentSubscription;
 import io.aeron.archive.client.ReplayMerge;
 import io.aeron.benchmarks.Configuration;
@@ -44,7 +43,6 @@ import static io.aeron.benchmarks.PropertiesUtil.loadPropertiesFiles;
 import static io.aeron.benchmarks.PropertiesUtil.mergeWithSystemProperties;
 import static io.aeron.benchmarks.aeron.AeronUtil.FRAGMENT_LIMIT;
 import static io.aeron.benchmarks.aeron.AeronUtil.RECEIVER_INDEX_OFFSET;
-
 import static io.aeron.benchmarks.aeron.AeronUtil.checkPublicationResult;
 import static io.aeron.benchmarks.aeron.AeronUtil.connectionTimeoutNs;
 import static io.aeron.benchmarks.aeron.AeronUtil.destinationChannel;
@@ -80,26 +78,26 @@ import static org.agrona.PropertyAction.REPLACE;
  * </pre>
  * <p>
  * Recovery strategy is selected at construction time via {@code recovering.echo.recovery.mode}:
- *   GAP             - accept the gap, wait for a new image
- *   REPLAY_MERGE    - replay from archive and merge back to live
- *   PERSISTENT_SUBSCRIPTION - replay via PersistentSubscription
+ * GAP             - accept the gap, wait for a new image
+ * REPLAY_MERGE    - replay from archive and merge back to live
+ * PERSISTENT_SUBSCRIPTION - replay via PersistentSubscription
  */
 public final class RecoveringEchoNode implements AutoCloseable, Runnable
 {
-    static final String RECOVERY_MODE_PROP                    = "recovering.echo.recovery.mode";
-    static final String ARCHIVE_CONTROL_CHANNEL_PROP          = "recovering.echo.archive.control.channel";
-    static final String ARCHIVE_CONTROL_STREAM_PROP           = "recovering.echo.archive.control.stream";
+    static final String RECOVERY_MODE_PROP = "recovering.echo.recovery.mode";
+    static final String ARCHIVE_CONTROL_CHANNEL_PROP = "recovering.echo.archive.control.channel";
+    static final String ARCHIVE_CONTROL_STREAM_PROP = "recovering.echo.archive.control.stream";
     static final String ARCHIVE_CONTROL_RESPONSE_CHANNEL_PROP = "recovering.echo.archive.control.response.channel";
-    static final String REPLAY_CHANNEL_PROP                   = "recovering.echo.replay.channel";
-    static final String REPLAY_DESTINATION_PROP               = "recovering.echo.replay.destination";
-    static final String RECORDING_ID_PROP                     = "recovering.echo.recording.id";
+    static final String REPLAY_CHANNEL_PROP = "recovering.echo.replay.channel";
+    static final String REPLAY_DESTINATION_PROP = "recovering.echo.replay.destination";
+    static final String RECORDING_ID_PROP = "recovering.echo.recording.id";
 
     /**
      * Offset of the processing time field (long, nanoseconds) within a message.
      * Immediately follows the receiver index int field.
      */
     static final int PROCESSING_TIME_OFFSET = RECEIVER_INDEX_OFFSET + SIZE_OF_INT;
-    static final int MESSAGE_ID_OFFSET      = PROCESSING_TIME_OFFSET + SIZE_OF_LONG;
+    static final int MESSAGE_ID_OFFSET = PROCESSING_TIME_OFFSET + SIZE_OF_LONG;
 
     // -------------------------------------------------------------------------
 
@@ -117,7 +115,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
     // -------------------------------------------------------------------------
 
     private long requestReceived = 0;
-    private long responsesSend   = 0;
+    private long responsesSend = 0;
     private long runningChecksum = 0;
 
     // -------------------------------------------------------------------------
@@ -136,9 +134,9 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
         final boolean ownsAeronClient,
         final int receiverIndex)
     {
-        this.running         = running;
-        this.mediaDriver     = mediaDriver;
-        this.aeron           = aeron;
+        this.running = running;
+        this.mediaDriver = mediaDriver;
+        this.aeron = aeron;
         this.ownsAeronClient = ownsAeronClient;
 
         final String recoveryMode = System.getProperty(RECOVERY_MODE_PROP, "GAP").toUpperCase();
@@ -153,7 +151,8 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
         publication = aeron.addExclusivePublication(sourceChannel(), sourceStreamId());
         System.out.println("  publication created: sessionId=" + publication.sessionId());
 
-       // Wait for publication connection and archive readiness, transceiver will not start subscription until the archive started recording
+        // Wait for publication connection and archive readiness, transceiver will not start subscription
+        // until the archive started recording
         System.out.println("  awaiting publication connected...");
         AeronUtil.awaitConnected(
             () -> publication.isConnected() && publication.availableWindow() > 0,
@@ -249,15 +248,14 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
     public static void main(final String[] args)
     {
         mergeWithSystemProperties(PRESERVE, loadPropertiesFiles(new Properties(), REPLACE, args));
-        final Path outputDir     = Configuration.resolveLogsDir();
-        final int  receiverIndex = AeronUtil.receiverIndex();
+        final Path outputDir = Configuration.resolveLogsDir();
+        final int receiverIndex = AeronUtil.receiverIndex();
 
         Thread.currentThread().setName("echo");
 
         final AtomicBoolean running = new AtomicBoolean(true);
         try (
-            ShutdownSignalBarrier shutdownSignalBarrier =
-                new ShutdownSignalBarrier(() -> running.set(false));
+            ShutdownSignalBarrier shutdownSignalBarrier = new ShutdownSignalBarrier(() -> running.set(false));
             RecoveringEchoNode node = new RecoveringEchoNode(running))
         {
 
@@ -268,8 +266,8 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
             finally
             {
                 System.out.println("Requests received: " + node.requestReceived);
-                System.out.println("Responses send: "    + node.responsesSend);
-                System.out.printf ("Running checksum:  0x%016X%n", node.runningChecksum);
+                System.out.println("Responses send: " + node.responsesSend);
+                System.out.printf("Running checksum:  0x%016X%n", node.runningChecksum);
 
                 final String prefix = "echo-node-" + receiverIndex + "-";
                 AeronUtil.dumpAeronStats(
@@ -283,7 +281,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
                         checksumFile,
                         String.format("0x%016X%n", node.runningChecksum));
                 }
-                catch (IOException e)
+                catch (final IOException e)
                 {
                     System.out.println("Failed to persist checksum file after run due to: " + e.getMessage());
                 }
@@ -298,7 +296,9 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
     interface EchoState extends AutoCloseable
     {
         void awaitConnected();
+
         int poll();
+
         void close();
     }
 
@@ -318,9 +318,9 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
 
         GapState(final Aeron aeron, final ExclusivePublication publication, final FragmentHandler fragmentHandler)
         {
-            this.aeron            = aeron;
-            this.publication      = publication;
-            this.fragmentHandler  = fragmentHandler;
+            this.aeron = aeron;
+            this.publication = publication;
+            this.fragmentHandler = fragmentHandler;
             this.liveSubscription = aeron.addSubscription(destinationChannel(), destinationStreamId());
         }
 
@@ -361,7 +361,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
             if (liveSubscription.imageCount() > 0)
             {
                 image = liveSubscription.imageAtIndex(0);
-                live  = true;
+                live = true;
                 return 1;
             }
 
@@ -390,28 +390,29 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
 
         private Subscription liveSubscription;
         private Subscription mergeSubscription;
-        private ReplayMerge  replayMerge;
+        private ReplayMerge replayMerge;
         private Image image;
         private boolean live = false;
         private long lostPosition = -1;
         private long recoveryStartNs;
-        private long recoveryDeadlineNs      = Long.MAX_VALUE;
+        private long recoveryDeadlineNs = Long.MAX_VALUE;
         private long recoveryArchiveFragments;
         private long recoveryLiveFragments;
         private boolean recoveryInArchivePhase;
         private int recoveryAttempts;
 
-        ReplayMergeState(final Aeron aeron, final ExclusivePublication publication, final FragmentHandler fragmentHandler)
+        ReplayMergeState(final Aeron aeron, final ExclusivePublication publication,
+            final FragmentHandler fragmentHandler)
         {
-            this.aeron             = aeron;
-            this.publication       = publication;
-            this.fragmentHandler   = fragmentHandler;
-            this.recordingId       = Long.getLong(RECORDING_ID_PROP, 0);
+            this.aeron = aeron;
+            this.publication = publication;
+            this.fragmentHandler = fragmentHandler;
+            this.recordingId = Long.getLong(RECORDING_ID_PROP, 0);
             this.replayChannelBase = System.getProperty(REPLAY_CHANNEL_PROP);
             this.replayDestination = System.getProperty(REPLAY_DESTINATION_PROP);
 
             System.out.printf("%s connecting to archive: controlChannel=%s, controlStream=%s, " +
-                    "controlResponseChannel=%s%n",
+                "controlResponseChannel=%s%n",
                 ReplayMergeState.class.getSimpleName(),
                 System.getProperty(ARCHIVE_CONTROL_CHANNEL_PROP),
                 System.getProperty(ARCHIVE_CONTROL_STREAM_PROP),
@@ -423,7 +424,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
                 .controlResponseChannel(System.getProperty(ARCHIVE_CONTROL_RESPONSE_CHANNEL_PROP)));
 
             System.out.printf("  archive connected. recordingId=%d, replayChannelBase=%s, " +
-                    "replayDestination=%s, liveDestination=%s%n",
+                "replayDestination=%s, liveDestination=%s%n",
                 recordingId, replayChannelBase, replayDestination, destinationChannel());
         }
 
@@ -467,17 +468,17 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
 
             if (replayMerge == null)
             {
-                recoveryStartNs          = System.nanoTime();
-                recoveryDeadlineNs       = recoveryStartNs + connectionTimeoutNs();
+                recoveryStartNs = System.nanoTime();
+                recoveryDeadlineNs = recoveryStartNs + connectionTimeoutNs();
                 recoveryArchiveFragments = 0;
-                recoveryLiveFragments    = 0;
-                recoveryInArchivePhase   = true;
+                recoveryLiveFragments = 0;
+                recoveryInArchivePhase = true;
 
                 final long archivePosition = aeronArchive.getRecordingPosition(recordingId);
 
                 if (archivePosition <= lostPosition)
                 {
-                    recoveryStartNs    = 0;
+                    recoveryStartNs = 0;
                     recoveryDeadlineNs = Long.MAX_VALUE;
                     return 0;
                 }
@@ -488,9 +489,9 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
                 final int found = aeronArchive.listRecording(
                     recordingId,
                     (controlSessionId, correlationId, recordingId1, startTimestamp, stopTimestamp,
-                     startPosition, stopPosition, initialTermId, segmentFileLength, termBufferLength,
-                     mtuLength, sessionId, streamId, strippedChannel, originalChannel, sourceIdentity) ->
-                        sessionIdHolder[0] = sessionId);
+                    startPosition, stopPosition, initialTermId, segmentFileLength, termBufferLength,
+                    mtuLength, sessionId, streamId, strippedChannel, originalChannel, sourceIdentity) ->
+                    sessionIdHolder[0] = sessionId);
 
                 if (found == 0)
                 {
@@ -553,12 +554,12 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
             if (replayMerge.isMerged())
             {
                 replayMerge.close();
-                replayMerge      = null;
+                replayMerge = null;
 
-                image             = mergeSubscription.imageAtIndex(0);
-                liveSubscription  = mergeSubscription;
+                image = mergeSubscription.imageAtIndex(0);
+                liveSubscription = mergeSubscription;
                 mergeSubscription = null;
-                live              = true;
+                live = true;
                 return 1;
             }
 
@@ -596,7 +597,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
             final long recordingId = Long.getLong(RECORDING_ID_PROP, 0);
 
             System.out.printf("%s connecting to archive: controlChannel=%s, controlStream=%s, " +
-                    "controlResponseChannel=%s%n",
+                "controlResponseChannel=%s%n",
                 PersistentSubscriptionState.class.getSimpleName(),
                 System.getProperty(ARCHIVE_CONTROL_CHANNEL_PROP),
                 System.getProperty(ARCHIVE_CONTROL_STREAM_PROP),

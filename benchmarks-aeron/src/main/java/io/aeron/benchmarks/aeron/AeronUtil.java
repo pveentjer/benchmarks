@@ -85,6 +85,10 @@ import static org.agrona.concurrent.status.CountersReader.NULL_COUNTER_ID;
 
 public final class AeronUtil
 {
+    // Murmur3 64-bit finalisation mix constants
+    private static final long MIX_CONSTANT_1 = 0xff51afd7ed558ccdL;
+    private static final long MIX_CONSTANT_2 = 0xc4ceb9fe1a85ec53L;
+
     public static final int TIMESTAMP_OFFSET = 0;
     public static final int RECEIVER_INDEX_OFFSET = TIMESTAMP_OFFSET + SIZE_OF_LONG;
     public static final int MIN_MESSAGE_LENGTH = RECEIVER_INDEX_OFFSET + SIZE_OF_LONG + SIZE_OF_LONG;
@@ -660,7 +664,8 @@ public final class AeronUtil
     public static SourceLocation sourceLocationForChannel(final String channel)
     {
         SourceLocation location = SourceLocation.NULL_VAL;
-        if(channel.startsWith("aeron:udp")){
+        if (channel.startsWith("aeron:udp"))
+        {
             location = SourceLocation.REMOTE;
         }
         else if (channel.startsWith("aeron-spy"))
@@ -669,9 +674,7 @@ public final class AeronUtil
         }
         return location;
     }
-    // Murmur3 64-bit finalisation mix constants
-    private static final long MIX_CONSTANT_1 = 0xff51afd7ed558ccdL;
-    private static final long MIX_CONSTANT_2 = 0xc4ceb9fe1a85ec53L;
+
 
     /**
      * Derives a 64-bit checksum from a message id using the Murmur3 finalisation mix.
@@ -684,7 +687,7 @@ public final class AeronUtil
      * @return a deterministic 64-bit hash of {@code toBeHashed} suitable for use as a checksum
      */
 
-    static long murmur3Checksum(final long toBeHashed )
+    static long murmur3Checksum(final long toBeHashed)
     {
         long hash = toBeHashed;
 

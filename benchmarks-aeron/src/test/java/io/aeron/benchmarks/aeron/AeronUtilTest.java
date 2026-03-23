@@ -622,12 +622,12 @@ class AeronUtilTest
     }
 
     @Test
-    void shouldDetectOutOfOrderHash ()
+    void shouldDetectOutOfOrderHash()
     {
-        final long first = 0l;
-        final long second = 1l;
-        long firstSecondResult = 0l;
-        long secondFirstResult = 0l;
+        final long first = 0L;
+        final long second = 1L;
+        long firstSecondResult = 0L;
+        long secondFirstResult = 0L;
 
         firstSecondResult = Long.rotateLeft(firstSecondResult, 1) ^ murmur3Checksum(first);
         firstSecondResult = Long.rotateLeft(firstSecondResult, 1) ^ murmur3Checksum(second);
