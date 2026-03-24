@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
+import static io.aeron.benchmarks.Configuration.DEFAULT_HISTOGRAM_LOGGING_INTERVAL_MS;
+import static io.aeron.benchmarks.Configuration.HISTOGRAM_LOGGING_INTERVAL_MS_PROP_NAME;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -64,8 +66,7 @@ public class LoggingPersistedHistogram implements PersistedHistogram
     static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(10);
     private static final EpochClock EPOCH_CLOCK = SystemEpochClock.INSTANCE;
     static final long LOGGING_INTERVAL_MS = Long.getLong(
-        "aeron.benchmark.histogram.logging.interval.ms", 100);
-
+        HISTOGRAM_LOGGING_INTERVAL_MS_PROP_NAME, DEFAULT_HISTOGRAM_LOGGING_INTERVAL_MS);
 
     private final SingleWriterRecorder recorder;
     private final HistogramState state;
@@ -135,7 +136,7 @@ public class LoggingPersistedHistogram implements PersistedHistogram
             PersistedHistogram.fileName(status, prefix, HISTORY_FILE_EXTENSION));
 
         try (PrintStream csvOutput = new PrintStream(csvPath.toFile(), StandardCharsets.US_ASCII);
-             HistogramLogReader reader = new HistogramLogReader(result.toFile()))
+            HistogramLogReader reader = new HistogramLogReader(result.toFile()))
         {
             csvOutput.print("timestamp (ms)");
             for (final double percentile : CSV_PERCENTILES)
