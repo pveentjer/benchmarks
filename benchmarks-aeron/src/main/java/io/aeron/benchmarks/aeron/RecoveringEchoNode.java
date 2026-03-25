@@ -485,20 +485,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
 
                 recoveryAttempts++;
 
-                final int[] sessionIdHolder = new int[1];
-                final int found = aeronArchive.listRecording(
-                    recordingId,
-                    (controlSessionId, correlationId, recordingId1, startTimestamp, stopTimestamp,
-                    startPosition, stopPosition, initialTermId, segmentFileLength, termBufferLength,
-                    mtuLength, sessionId, streamId, strippedChannel, originalChannel, sourceIdentity) ->
-                    sessionIdHolder[0] = sessionId);
-
-                if (found == 0)
-                {
-                    throw new IllegalStateException("Recording not found for recordingId=" + recordingId);
-                }
-
-                final int recordingSessionId = sessionIdHolder[0];
+                final int recordingSessionId = getRecordingSessionId();
 
                 final String replayChannel = new ChannelUriStringBuilder(replayChannelBase)
                     .sessionId(recordingSessionId)
@@ -564,6 +551,25 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
             }
 
             return fragments;
+        }
+
+        private int getRecordingSessionId()
+        {
+            final int[] sessionIdHolder = new int[1];
+            final int found = aeronArchive.listRecording(
+                recordingId,
+                (controlSessionId, correlationId, recordingId1, startTimestamp, stopTimestamp,
+                startPosition, stopPosition, initialTermId, segmentFileLength, termBufferLength,
+                mtuLength, sessionId, streamId, strippedChannel, originalChannel, sourceIdentity) ->
+                sessionIdHolder[0] = sessionId);
+
+            if (found == 0)
+            {
+                throw new IllegalStateException("Recording not found for recordingId=" + recordingId);
+            }
+
+            final int recordingSessionId = sessionIdHolder[0];
+            return recordingSessionId;
         }
 
         public void close()
