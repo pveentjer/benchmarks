@@ -109,6 +109,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
     private final Aeron aeron;
     private final boolean ownsAeronClient;
     private final EchoState echoState;
+    private final String recoveryMode;
 
     // -------------------------------------------------------------------------
     // Counters
@@ -138,8 +139,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
         this.mediaDriver = mediaDriver;
         this.aeron = aeron;
         this.ownsAeronClient = ownsAeronClient;
-
-        final String recoveryMode = System.getProperty(RECOVERY_MODE_PROP, "GAP").toUpperCase();
+        this.recoveryMode = System.getProperty(RECOVERY_MODE_PROP, "GAP").toUpperCase();
 
         System.out.println("recoveryMode: " + recoveryMode);
         System.out.printf("%s.init(receiverIndex=%s)%n", RecoveringEchoNode.class.getSimpleName(), receiverIndex);
@@ -279,7 +279,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
                 {
                     Files.writeString(
                         checksumFile,
-                        String.format("0x%016X%n", node.runningChecksum));
+                        String.format("0x%016X%n%s", node.runningChecksum, node.recoveryMode));
                 }
                 catch (final IOException e)
                 {
