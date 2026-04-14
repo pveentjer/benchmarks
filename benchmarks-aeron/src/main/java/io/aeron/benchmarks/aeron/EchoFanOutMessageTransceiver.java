@@ -32,11 +32,11 @@ import org.agrona.BitUtil;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.NanoClock;
 import org.agrona.concurrent.SystemNanoClock;
-import static io.aeron.benchmarks.aeron.AeronUtil.*;
-import java.util.Random;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.aeron.Aeron.connect;
@@ -230,12 +230,12 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
          * Writes all message fields. Encodes the stall processing time for the target receiver
          * when a stall is pending, otherwise the normal processing time.
          *
-         * @param buffer buffer
-         * @param offset offset
+         * @param buffer        buffer
+         * @param offset        offset
          * @param messageLength messageLength
-         * @param timestamp timestamp
-         * @param checksum checksum
-         * @param receiver receiver
+         * @param timestamp     timestamp
+         * @param checksum      checksum
+         * @param receiver      receiver
          */
         void write(
             final MutableDirectBuffer buffer,
@@ -461,9 +461,9 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
                     channel,
                     stream,
                     (controlSessionId, correlationId, recordingId,
-                    startTimestamp, stopTimestamp, startPosition, stopPosition,
-                    initialTermId, segmentFileLength, termBufferLength, mtuLength,
-                    sessionId, streamId, strippedChannel, originalChannel, sourceIdentity) -> found.set(true));
+                     startTimestamp, stopTimestamp, startPosition, stopPosition,
+                     initialTermId, segmentFileLength, termBufferLength, mtuLength,
+                     sessionId, streamId, strippedChannel, originalChannel, sourceIdentity) -> found.set(true));
                 return found.get();
             },
             connectionTimeoutNs(),
@@ -492,18 +492,21 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
             logsDir.resolve(prefix + "aeron-stat.txt"),
             logsDir.resolve(prefix + "errors.txt"));
 
-        for (int i = 0; i < strategy.runningChecksums.length; i++)
+        if (strategy != null)
         {
-            try
+            for (int i = 0; i < strategy.runningChecksums.length; i++)
             {
-                final Path checksumFile = outputDir.resolve(String.format("%snode-%d-checksum.txt", prefix, i));
-                Files.writeString(
-                    checksumFile,
-                    String.format("0x%016X%n", this.strategy.runningChecksums[i]));
-            }
-            catch (final IOException e)
-            {
-                System.out.println("Failed to persist checksum file after run due to: " + e.getMessage());
+                try
+                {
+                    final Path checksumFile = outputDir.resolve(String.format("%snode-%d-checksum.txt", prefix, i));
+                    Files.writeString(
+                        checksumFile,
+                        String.format("0x%016X%n", this.strategy.runningChecksums[i]));
+                }
+                catch (final IOException e)
+                {
+                    System.out.println("Failed to persist checksum file after run due to: " + e.getMessage());
+                }
             }
         }
 
