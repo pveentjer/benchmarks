@@ -22,6 +22,8 @@
 #include <signal.h>
 #include <inttypes.h>
 #include <sched.h>
+#include <time.h>
+#include <errno.h>
 
 #include "aeronc.h"
 #include "aeron_agent.h"
@@ -42,6 +44,8 @@
 #define PROPERTIES_MAX_KEY              512
 #define PROPERTIES_MAX_VALUE            2048
 #define PROPERTIES_MAX_ENTRIES          256
+
+#define STARTUP_DELAY_MS_PROP   "recovering.echo.startup.delay.ms"
 
 #define MIX_CONSTANT_1  UINT64_C(0xff51afd7ed558ccd)
 #define MIX_CONSTANT_2  UINT64_C(0xc4ceb9fe1a85ec53)
@@ -931,6 +935,26 @@ int main(int argc, char **argv)
             return 1;
         }
         properties_merge(&props, &file_props);
+    }
+
+    const int64_t startup_delay_ms = properties_get_int64(&props, STARTUP_DELAY_MS_PROP, 0);
+    printf("%s %" PRId64 " ms\n", STARTUP_DELAY_MS_PROP, startup_delay_ms);
+
+    if (startup_delay_ms > 1)
+    {
+        printf("Delaying startup\n");
+        struct timespec ts;
+        ts.tv_sec  = (time_t)(startup_delay_ms / 1000);
+        ts.tv_nsec = (long)((startup_delay_ms % 1000) * 1000000L);
+        while (nanosleep(&ts, &ts) == -1 && errno == EINTR)
+        {
+            /* resume with remaining time on signal interruption */
+        }
+        printf("Delaying startup done!\n");
+    }
+    else
+    {
+        printf("No delayed startup\n");
     }
 
     const char *recovery_mode =

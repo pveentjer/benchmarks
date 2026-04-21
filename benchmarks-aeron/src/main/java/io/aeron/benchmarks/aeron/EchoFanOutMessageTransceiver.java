@@ -396,21 +396,21 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
         System.out.println("  publication connected (remaining " + remainingConnectTimeoutNs / 1_000_000 + "ms)");
 
 
-        for (int i = 0; i < receiverCount; i++)
-        {
-            System.out.println("  awaiting subscription[" + i + "] " +
-                "(remaining " + remainingConnectTimeoutNs / 1_000_000 + "ms): channel=" +
-                subscriptions[i].channel() + " stream=" + subscriptions[i].streamId());
-            startNs = SystemNanoClock.INSTANCE.nanoTime();
-            final int idx = i;
-            awaitConnected(
-                () -> subscriptions[idx].isConnected(),
-                remainingConnectTimeoutNs,
-                SystemNanoClock.INSTANCE);
-            remainingConnectTimeoutNs -= SystemNanoClock.INSTANCE.nanoTime() - startNs;
-            System.out.println("  subscription[" + i + "] connected (remaining " +
-                remainingConnectTimeoutNs / 1_000_000 + "ms)");
-        }
+//        for (int i = 0; i < receiverCount; i++)
+//        {
+//            System.out.println("  awaiting subscription[" + i + "] " +
+//                "(remaining " + remainingConnectTimeoutNs / 1_000_000 + "ms): channel=" +
+//                subscriptions[i].channel() + " stream=" + subscriptions[i].streamId());
+//            startNs = SystemNanoClock.INSTANCE.nanoTime();
+//            final int idx = i;
+//            awaitConnected(
+//                () -> subscriptions[idx].isConnected(),
+//                remainingConnectTimeoutNs,
+//                SystemNanoClock.INSTANCE);
+//            remainingConnectTimeoutNs -= SystemNanoClock.INSTANCE.nanoTime() - startNs;
+//            System.out.println("  subscription[" + i + "] connected (remaining " +
+//                remainingConnectTimeoutNs / 1_000_000 + "ms)");
+//        }
 
         strategy = new ControlStrategy(receiverCount);
         strategy.start(SystemNanoClock.INSTANCE.nanoTime());
@@ -527,9 +527,23 @@ public final class EchoFanOutMessageTransceiver extends MessageTransceiver
         {
             int retryCount = SEND_ATTEMPTS;
             long result;
+            long backPressureStartNs = -1;
+            long lastWarnNs = -1;
             while ((result = publication.tryClaim(messageLength, bufferClaim)) < 0)
             {
                 checkPublicationResult(result, idleStrategy());
+                final long nowNs = System.nanoTime();
+                if (backPressureStartNs < 0)
+                {
+                    backPressureStartNs = nowNs;
+                    lastWarnNs = nowNs;
+                }
+                else if (nowNs - lastWarnNs >= 1_000_000_000L)
+                {
+                    System.out.printf("back-pressured on publication for %dms, result=%d%n",
+                        (nowNs - backPressureStartNs) / 1_000_000, result);
+                    lastWarnNs = nowNs;
+                }
                 if (0 == --retryCount)
                 {
                     return count;

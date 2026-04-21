@@ -91,6 +91,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
     static final String REPLAY_CHANNEL_PROP = "recovering.echo.replay.channel";
     static final String REPLAY_DESTINATION_PROP = "recovering.echo.replay.destination";
     static final String RECORDING_ID_PROP = "recovering.echo.recording.id";
+    static final String STARTUP_DELAY_MS_PROP = "recovering.echo.startup.delay.ms";
 
     /**
      * Offset of the processing time field (long, nanoseconds) within a message.
@@ -253,6 +254,27 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
 
         Thread.currentThread().setName("echo");
 
+        long startUpDelayMs = Long.getLong(STARTUP_DELAY_MS_PROP, 0);
+        System.out.println(STARTUP_DELAY_MS_PROP+" "+startUpDelayMs+" ms");
+
+        if (startUpDelayMs > 1)
+        {
+            System.out.println("Delaying startup");
+            try
+            {
+                Thread.sleep(startUpDelayMs);
+            }
+            catch (InterruptedException e)
+            {
+                throw new RuntimeException(e);
+            }
+            System.out.println("Delaying startup done!");
+        }
+        else
+        {
+            System.out.println("No delayed startup");
+        }
+
         final AtomicBoolean running = new AtomicBoolean(true);
         try (
             ShutdownSignalBarrier shutdownSignalBarrier = new ShutdownSignalBarrier(() -> running.set(false));
@@ -402,7 +424,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
         private int recoveryAttempts;
 
         ReplayMergeState(final Aeron aeron, final ExclusivePublication publication,
-            final FragmentHandler fragmentHandler)
+                         final FragmentHandler fragmentHandler)
         {
             this.aeron = aeron;
             this.publication = publication;
@@ -412,7 +434,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
             this.replayDestination = System.getProperty(REPLAY_DESTINATION_PROP);
 
             System.out.printf("%s connecting to archive: controlChannel=%s, controlStream=%s, " +
-                "controlResponseChannel=%s%n",
+                    "controlResponseChannel=%s%n",
                 ReplayMergeState.class.getSimpleName(),
                 System.getProperty(ARCHIVE_CONTROL_CHANNEL_PROP),
                 System.getProperty(ARCHIVE_CONTROL_STREAM_PROP),
@@ -424,7 +446,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
                 .controlResponseChannel(System.getProperty(ARCHIVE_CONTROL_RESPONSE_CHANNEL_PROP)));
 
             System.out.printf("  archive connected. recordingId=%d, replayChannelBase=%s, " +
-                "replayDestination=%s, liveDestination=%s%n",
+                    "replayDestination=%s, liveDestination=%s%n",
                 recordingId, replayChannelBase, replayDestination, destinationChannel());
         }
 
@@ -559,9 +581,9 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
             final int found = aeronArchive.listRecording(
                 recordingId,
                 (controlSessionId, correlationId, recordingId1, startTimestamp, stopTimestamp,
-                startPosition, stopPosition, initialTermId, segmentFileLength, termBufferLength,
-                mtuLength, sessionId, streamId, strippedChannel, originalChannel, sourceIdentity) ->
-                sessionIdHolder[0] = sessionId);
+                 startPosition, stopPosition, initialTermId, segmentFileLength, termBufferLength,
+                 mtuLength, sessionId, streamId, strippedChannel, originalChannel, sourceIdentity) ->
+                    sessionIdHolder[0] = sessionId);
 
             if (found == 0)
             {
@@ -603,7 +625,7 @@ public final class RecoveringEchoNode implements AutoCloseable, Runnable
             final long recordingId = Long.getLong(RECORDING_ID_PROP, 0);
 
             System.out.printf("%s connecting to archive: controlChannel=%s, controlStream=%s, " +
-                "controlResponseChannel=%s%n",
+                    "controlResponseChannel=%s%n",
                 PersistentSubscriptionState.class.getSimpleName(),
                 System.getProperty(ARCHIVE_CONTROL_CHANNEL_PROP),
                 System.getProperty(ARCHIVE_CONTROL_STREAM_PROP),
